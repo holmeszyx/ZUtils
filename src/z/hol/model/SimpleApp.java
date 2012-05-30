@@ -11,7 +11,7 @@ import org.json.JSONObject;
 import z.hol.utils.FileUtils;
 import android.text.TextUtils;
 
-public class RecommendedApp implements Serializable{
+public class SimpleApp implements Serializable{
 	private static final long serialVersionUID = 2409399518037749844L;
 	
 	private String packageName;
@@ -90,8 +90,8 @@ public class RecommendedApp implements Serializable{
 		if (o == null){
 			return false;
 		}
-		if (o instanceof RecommendedApp){
-			if (((RecommendedApp) o).getAppId() == this.getAppId())
+		if (o instanceof SimpleApp){
+			if (((SimpleApp) o).getAppId() == this.getAppId())
 				return true;
 			else
 				return false;
@@ -101,23 +101,23 @@ public class RecommendedApp implements Serializable{
 		//return super.equals(o);
 	}
 	
-	public static List<RecommendedApp> fromJsonArray(JSONArray json) throws JSONException{
+	public static List<SimpleApp> fromJsonArray(JSONArray json) throws JSONException{
 		int length = json.length();
 		if (length < 16){
 			length = 16;
 		}
-		List<RecommendedApp> appList = new ArrayList<RecommendedApp>(length);
+		List<SimpleApp> appList = new ArrayList<SimpleApp>(length);
 		for (int i = 0; i < json.length(); i ++){
-			RecommendedApp app = fromJson(json.getJSONObject(i));
+			SimpleApp app = fromJson(json.getJSONObject(i));
 			if (app != null)
 				appList.add(app);
 		}
 		return appList;
 	}
 	
-	public static RecommendedApp fromJson(JSONObject json) throws JSONException{
+	public static SimpleApp fromJson(JSONObject json) throws JSONException{
 		if (json != null){
-			RecommendedApp app = new RecommendedApp();
+			SimpleApp app = new SimpleApp();
 			app.setAppId(json.getLong("id"));
 			app.setPackageName(json.getString("package"));
 			app.setIcon(json.getString("icon"));

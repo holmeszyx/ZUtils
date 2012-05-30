@@ -1,16 +1,16 @@
 package z.hol.net.download;
 
-import z.hol.model.RecommendedApp;
+import z.hol.model.SimpleApp;
 import z.hol.net.download.AbsDownloadManager.Task;
 import z.hol.net.download.utils.AppDownloadUtils;
 
 public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	
 	private DownloadListener mListener;
-	private RecommendedApp mApp;
+	private SimpleApp mApp;
 	private AppStatusSaver mStatusSaver;
 	
-	public FileContinuinglyDownloader(RecommendedApp app, long startPos, AppStatusSaver saver, DownloadListener listener){
+	public FileContinuinglyDownloader(SimpleApp app, long startPos, AppStatusSaver saver, DownloadListener listener){
 		super(app.getAppUrl(), app.getSize(), startPos, 0, AppDownloadUtils.getAppSavePath(app.getPackageName()));
 		mApp = app;
 		mListener = listener;

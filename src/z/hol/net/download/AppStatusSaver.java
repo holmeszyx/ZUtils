@@ -1,6 +1,6 @@
 package z.hol.net.download;
 
-import z.hol.model.RecommendedApp;
+import z.hol.model.SimpleApp;
 
 /**
  * APP下载状态, 保存器
@@ -35,7 +35,7 @@ public interface AppStatusSaver {
 	  * 添加一个APP下载,并加入初始化数据
 	  * @param app
 	  */
-	 public void addAppDownload(RecommendedApp app);
+	 public void addAppDownload(SimpleApp app);
 	 
 	 /**
 	  * 更新APP的大小 

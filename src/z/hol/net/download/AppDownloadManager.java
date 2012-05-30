@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import z.hol.model.RecommendedApp;
+import z.hol.model.SimpleApp;
 import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
 import android.content.Context;
 
@@ -40,7 +40,7 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 		mDownloadUIHandlerList.clear();
 	}
 	
-	public boolean addTask(RecommendedApp app){
+	public boolean addTask(SimpleApp app){
 		AppDownloadTask task = new AppDownloadTask(app, -1, mStatusSaver, this);
 		return super.addTask(task);
 	}

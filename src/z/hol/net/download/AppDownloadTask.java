@@ -1,28 +1,28 @@
 package z.hol.net.download;
 
 
-import z.hol.model.RecommendedApp;
+import z.hol.model.SimpleApp;
 import z.hol.net.download.AbsDownloadManager.Task;
 import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
 
 public class AppDownloadTask implements Task, DownloadListener{
 	
 	private FileContinuinglyDownloader downloader;
-	private RecommendedApp mApp;
+	private SimpleApp mApp;
 	private Thread mThread;
 	private int mState = STATE_PERPARE;
 	private DownloadListener mListener;
 	private AppStatusSaver mStatusSaver;
 	private long startPos;
 	
-	public AppDownloadTask(RecommendedApp app, long startPos, AppStatusSaver saver, DownloadListener listener){
+	public AppDownloadTask(SimpleApp app, long startPos, AppStatusSaver saver, DownloadListener listener){
 		mApp = app;
 		mStatusSaver = saver;
 		mListener = listener;
 		this.startPos = startPos;
 	}
 	
-	public RecommendedApp getApp(){
+	public SimpleApp getApp(){
 		return mApp;
 	}
 	

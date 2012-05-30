@@ -1,6 +1,6 @@
 package z.hol.net.download;
 
-import z.hol.model.RecommendedApp;
+import z.hol.model.SimpleApp;
 import z.hol.net.download.AbsDownloadManager.Task;
 import z.hol.net.download.utils.AppDownloadUtils;
 import android.content.ContentValues;
@@ -17,7 +17,7 @@ public class SimpleStatusSaver implements AppStatusSaver{
 	}
 
 	@Override
-	public void addAppDownload(RecommendedApp app) {
+	public void addAppDownload(SimpleApp app) {
 		// TODO Auto-generated method stub
 		SQLiteDatabase db = getWritableDatabase();
 		ContentValues values = new ContentValues();
@@ -74,7 +74,7 @@ public class SimpleStatusSaver implements AppStatusSaver{
 		 SQLiteDatabase db = getReadableDatabase();
 		 Cursor c = db.query(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, APP_TASK_PROJECTION, APP._ID + "=" + appId, null, null, null, null);
 		 if (c!= null && c.moveToFirst()){
-			 RecommendedApp app = task.getApp();
+			 SimpleApp app = task.getApp();
 			 app.setSize(c.getLong(2));
 			 task.setStartPos(c.getLong(7));
 		 }
