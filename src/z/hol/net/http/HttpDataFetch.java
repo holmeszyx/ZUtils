@@ -41,12 +41,10 @@ import org.apache.http.protocol.HTTP;
 import android.content.Context;
 
 public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
-	public static final String HTTP_STAT_NO_FOUND = "nodemix#$http#$404";
 	
 	public static final String HTTP_HEAD_SESSION_KEY = "Cookie";
 	public static final String HTTP_HEAD_SESSION_VALUE_HEAD = "sessionid=";
 	public static final String HTTP_HEAD_USER_AGENT_KEY = "User-Agent";
-	public static final String HTTP_HEAD_USER_AGENT_VALUE = "NodeMix-AndroidClient/1.0";
 	
 	
 	public static String token = "";
