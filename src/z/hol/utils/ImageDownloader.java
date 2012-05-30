@@ -141,7 +141,9 @@ public class ImageDownloader {
        }
      */
 
-    private void forceDownload(String url, ImageView imageView){
+    
+    @SuppressWarnings("unused")
+	private void forceDownload(String url, ImageView imageView){
     	forceDownload(url, imageView, NO_DEFAULT_PIC);
     }
     
@@ -227,7 +229,8 @@ public class ImageDownloader {
         return null;
     }
 
-    Bitmap downloadBitmap(String url) {
+    @SuppressWarnings("unused")
+	Bitmap downloadBitmap(String url) {
         final int IO_BUFFER_SIZE = 4 * 1024;
 
         // AndroidHttpClient is not allowed to be used from the main thread
@@ -414,7 +417,8 @@ public class ImageDownloader {
     private static final int DELAY_BEFORE_PURGE = 10 * 1000; // in milliseconds
 
     // Hard cache, with a fixed maximum capacity and a life duration
-    private final HashMap<String, Bitmap> sHardBitmapCache =
+    @SuppressWarnings("serial")
+	private final HashMap<String, Bitmap> sHardBitmapCache =
         new LinkedHashMap<String, Bitmap>(HARD_CACHE_CAPACITY / 2, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(LinkedHashMap.Entry<String, Bitmap> eldest) {

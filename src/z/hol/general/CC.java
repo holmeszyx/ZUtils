@@ -6,6 +6,7 @@ package z.hol.general;
  *
  */
 public class CC {
+	public static final long SECEND = 1000;
 
 	private long mStartTime = 0;
 	private long mEndTime = 0;
