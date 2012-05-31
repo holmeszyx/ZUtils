@@ -35,6 +35,13 @@ public class AppDownloadTask implements Task, DownloadListener{
 		// TODO Auto-generated method stub
 		return mState;
 	}
+	
+	/**
+	 * 设置下载任务状态
+	 */
+	void setStatus(int state){
+		mState = state;
+	}
 
 	@Override
 	public long getTaskId() {

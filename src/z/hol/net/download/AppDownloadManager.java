@@ -24,6 +24,7 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 	public static AppDownloadManager getInstance(Context context){
 		if (downloadManager == null){
 			downloadManager = new AppDownloadManager(context);
+			downloadManager.resotreAppTasks();
 		}
 		return downloadManager;
 	}
@@ -51,6 +52,27 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 			return Task.STATE_INVALID;
 		}
 		return task.getStatus();
+	}
+	
+	/**
+	 * 恢复应用下载任务
+	 */
+	private void resotreAppTasks(){
+		List<AppDownloadTask> tasks = mStatusSaver.getAppTaskList(mStatusSaver, this);
+		for (int i = 0; i < tasks.size(); i ++){
+			AppDownloadTask task = tasks.get(i);
+			if (task.getStatus() == Task.STATE_RUNNING){
+				task.setStatus(Task.STATE_PAUSE);
+			}
+			addTask(task, false);
+		}
+	}
+	
+	@Override
+	protected void onTaskRemove(long taskId) {
+		// TODO Auto-generated method stub
+		super.onTaskRemove(taskId);
+		mStatusSaver.removeAppTask(taskId);
 	}
 
 	@Override

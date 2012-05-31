@@ -26,6 +26,7 @@ public class Response {
 		headers = httpResp.getAllHeaders();
 		try {
 			rawContent = EntityUtils.toByteArray(httpResp.getEntity());
+			httpResp.getEntity().consumeContent();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

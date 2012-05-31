@@ -1,6 +1,9 @@
 package z.hol.net.download;
 
+import java.util.List;
+
 import z.hol.model.SimpleApp;
+import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
 
 /**
  * APP下载状态, 保存器
@@ -72,7 +75,8 @@ public interface AppStatusSaver {
 		APP.START_POS,	// 7
 		APP.URL,		// 8
 		APP.VERSION_CODE,	// 9
-		APP.VERSION_NAME		//10
+		APP.VERSION_NAME,		//10
+		APP.STATE	// 11
 	 }; 
 	 
 	 /**
@@ -82,4 +86,17 @@ public interface AppStatusSaver {
 	  * @return
 	  */
 	 public AppDownloadTask getAppTask(long appId, AppDownloadTask task);	 
+	 
+	 /**
+	  * 获取已保存的APP下载任务列表<br>
+	  * 包括下载完成, 主要用于恢复下载管理器数据
+	  * @return
+	  */
+	 public List<AppDownloadTask> getAppTaskList(AppStatusSaver saver, DownloadListener listener);
+	 
+	 /**
+	  * 删除任务
+	  */
+	 public void removeAppTask(long appId);
+	 
 }

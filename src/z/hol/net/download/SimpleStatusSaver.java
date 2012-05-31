@@ -1,7 +1,11 @@
 package z.hol.net.download;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import z.hol.model.SimpleApp;
 import z.hol.net.download.AbsDownloadManager.Task;
+import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
 import z.hol.net.download.utils.AppDownloadUtils;
 import android.content.ContentValues;
 import android.content.Context;
@@ -73,7 +77,7 @@ public class SimpleStatusSaver implements AppStatusSaver{
 		// TODO Auto-generated method stub
 		 SQLiteDatabase db = getReadableDatabase();
 		 Cursor c = db.query(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, APP_TASK_PROJECTION, APP._ID + "=" + appId, null, null, null, null);
-		 if (c!= null && c.moveToFirst()){
+		 if (c != null && c.moveToFirst()){
 			 SimpleApp app = task.getApp();
 			 app.setSize(c.getLong(2));
 			 task.setStartPos(c.getLong(7));
@@ -82,6 +86,61 @@ public class SimpleStatusSaver implements AppStatusSaver{
 		 db.close();
 		 
 		return task;
+	}
+	
+	
+	@Override
+	public List<AppDownloadTask> getAppTaskList(AppStatusSaver saver, DownloadListener listener) {
+		// TODO Auto-generated method stub
+//		APP._ID,		// 0
+//		APP.ICON,	// 1
+//		APP.LEN,		// 2
+//		APP.LEN_FORMATED,	// 3
+//		APP.NAME,	// 4
+//		APP.PACKAGE,		// 5
+//		APP.SAVE_FILE,	// 6
+//		APP.START_POS,	// 7
+//		APP.URL,		// 8
+//		APP.VERSION_CODE,	// 9
+//		APP.VERSION_NAME		//10
+//		APP.STATE	// 11
+		
+		
+		List<AppDownloadTask> tasks = new ArrayList<AppDownloadTask>();
+		SQLiteDatabase db = getReadableDatabase();
+		Cursor c = db.query(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, APP_TASK_PROJECTION, null, null, null, null, null);
+		if (c != null){
+			while (c.moveToNext()){
+				SimpleApp app = new SimpleApp();
+				app.setAppId(c.getLong(0));
+				app.setIcon(c.getString(1));
+				app.setSize(c.getLong(2));
+				app.setFormatedSize(c.getString(3));
+				app.setName(c.getString(4));
+				app.setPackageName(c.getString(5));
+				app.setAppUrl(c.getString(8));
+				app.setVersionCode(c.getInt(9));
+				app.setVersionName(c.getString(10));
+				long startPos = c.getLong(7);
+				int state = c.getInt(11);
+				
+				AppDownloadTask task = new AppDownloadTask(app, startPos, saver, listener);
+				task.setStatus(state);
+				tasks.add(task);
+			}
+		}
+		if (c != null) c.close();
+		db.close();
+		
+		return tasks;
+	}
+	
+	@Override
+	public void removeAppTask(long appId) {
+		// TODO Auto-generated method stub
+		SQLiteDatabase db = getWritableDatabase();
+		db.delete(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, APP._ID + "=" + appId, null);
+		db.close();
 	}
 
 	 private SQLiteDatabase getWritableDatabase(){

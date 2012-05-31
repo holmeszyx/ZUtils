@@ -144,9 +144,18 @@ public abstract class AbsDownloadManager {
 		if (task != null){
 			task.cancel();
 			taskMap.remove(taskId);
+			onTaskRemove(taskId);
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * 当TASK移除后
+	 * @param taskId
+	 */
+	protected void onTaskRemove(long taskId) {
+		
 	}
 	
 	/**
