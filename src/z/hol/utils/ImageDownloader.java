@@ -16,6 +16,9 @@
 
 package z.hol.utils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +56,7 @@ import android.widget.ImageView;
  */
 public class ImageDownloader {
 	public static final int NO_DEFAULT_PIC = -1;
+	public static final String CACHE_PATH = "/sdcard/zicache/";
     private static final String LOG_TAG = "ImageDownloader";
     private static Boolean AUTO_CLEAR = false;	// is auto clear cache
     
@@ -79,6 +83,19 @@ public class ImageDownloader {
     	return mImageDownloader;
     }
     		
+    public ImageDownloader(){
+    	initCacheFolder();
+    }
+    
+    private void initCacheFolder(){
+    	File f = new File(CACHE_PATH);
+    	if (!f.exists()){
+    		f.mkdirs();
+    		Log.i(LOG_TAG, "make cache dirs");
+    	}else{
+    		Log.i(LOG_TAG, "cache dir exists");
+    	}
+    }
     
     public void download(String url, ImageView imageView){
     	download(url, imageView, NO_DEFAULT_PIC);
@@ -231,6 +248,13 @@ public class ImageDownloader {
 
     @SuppressWarnings("unused")
 	Bitmap downloadBitmap(String url) {
+    	
+    	// 从SD卡拿图片
+    	Bitmap image = getImageFromSD(url);
+    	if (image != null){
+    		return image;
+    	}
+    	
         final int IO_BUFFER_SIZE = 4 * 1024;
 
         // AndroidHttpClient is not allowed to be used from the main thread
@@ -259,7 +283,10 @@ public class ImageDownloader {
                     inputStream = entity.getContent();
                     // return BitmapFactory.decodeStream(inputStream);
                     // Bug on slow connections, fixed in future release.
-                    return BitmapFactory.decodeStream(new FlushedInputStream(inputStream));
+                    image = BitmapFactory.decodeStream(new FlushedInputStream(inputStream));
+                    cacheImageToFile(url, image);
+                    return image;
+                    //return BitmapFactory.decodeStream(new FlushedInputStream(inputStream));
                     // 加入圆角图后
                     /*Bitmap orgBitmap = BitmapFactory.decodeStream(new FlushedInputStream(inputStream));
                     Bitmap roundedBitmap = null;
@@ -321,6 +348,102 @@ public class ImageDownloader {
             }
             return totalBytesSkipped;
         }
+    }
+    
+    /**
+     * MD5的reference
+     */
+    ConcurrentHashMap<String, WeakReference<String>> mWeakMD5Map = new ConcurrentHashMap<String, WeakReference<String>>();
+    
+    /**
+     * 获取一个URL的MD5值
+     * @param url
+     * @return
+     */
+    private String getUrlMd5(String url){
+    	WeakReference<String> md5Reference = mWeakMD5Map.get(url);
+    	if (md5Reference != null){
+    		String md5 = md5Reference.get();
+    		if (md5 != null){
+    			return md5;
+    		}else{
+    			mWeakMD5Map.remove(url);
+    		}
+    	}
+    	
+    	String md5 = MD5Util.getMD5String(url).toLowerCase();
+    	md5Reference = new WeakReference<String>(md5);
+    	mWeakMD5Map.put(url, md5Reference);
+    	return md5;
+    }
+    
+    /**
+     * 获取一个本地缓存的文件
+     * @param name
+     * @return
+     */
+    private File getCacheFile(String name){
+    	return new File(CACHE_PATH, name);
+    }
+    
+    /**
+     * 缓存一个图片到本地<br>
+     * 根据情况开线程去缓存
+     * @param url
+     * @param bitmap
+     */
+    private void cacheImageToFile(String url, Bitmap bitmap){
+    	cacheImageToFileSingle(url, bitmap);
+    }
+    
+    /**
+     * 缓存一个图片到本地<br>
+     * 未开线程，所以最好使用 {@link #cacheImageToFile(String, Bitmap)}
+     * @param url
+     * @param bitmap
+     */
+    private void cacheImageToFileSingle(String url, Bitmap bitmap){
+    	if (bitmap != null){
+	    	String fileName = getUrlMd5(url);
+	    	try {
+				FileOutputStream outStream = new FileOutputStream(getCacheFile(fileName));
+				bitmap.compress(Bitmap.CompressFormat.PNG, 80, outStream);
+				outStream.flush();
+				outStream.close();
+				changeFileLastModifyTime(fileName);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}    	
+    }
+    
+    /**
+     * 设置文件最好修改时间
+     * @param fileName
+     */
+    private void changeFileLastModifyTime(String fileName){
+    	File f = getCacheFile(fileName);
+    	f.setLastModified(System.currentTimeMillis());
+    }
+    
+    /**
+     * 从SD卡得到图片<br>
+     * 耗时操作，最好放在非UI线程里面
+     * @param url
+     * @return
+     */
+    public Bitmap getImageFromSD(String url){
+    	String fileName = getUrlMd5(url);
+    	File f = getCacheFile(fileName);
+    	if (!f.exists()){
+    		return null;
+    	}
+    	Bitmap bitmap = BitmapFactory.decodeFile(f.getAbsolutePath());
+    	return bitmap;
     }
 
     /**
