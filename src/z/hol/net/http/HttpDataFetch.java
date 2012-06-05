@@ -10,7 +10,14 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.http.Header;
+import org.apache.http.HeaderElement;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
@@ -37,7 +44,9 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
+import org.apache.http.protocol.HttpContext;
 
+import z.hol.net.http.entity.GzipDecompressingEntity;
 import android.content.Context;
 
 public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
@@ -49,12 +58,53 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	
 	public static String token = "";
 	public static long lastTimestamp = 0;
-	public static long lastSMSThreadTimestamp = 0;
 	public static String session = null;
+	
+	/**
+	 * Gzip请求插值器
+	 */
+	private static final HttpRequestInterceptor HTTP_REQUEST_INTERCEPTOR = new HttpRequestInterceptor() {
+		
+		@Override
+		public void process(HttpRequest request, HttpContext context)
+				throws HttpException, IOException {
+			// TODO Auto-generated method stub
+            if (!request.containsHeader("Accept-Encoding")) {
+                request.addHeader("Accept-Encoding", "gzip");
+            }
+		}
+	};
+	
+	/**
+	 * gzip响应插值器
+	 */
+	private static final HttpResponseInterceptor HTTP_RESPONSE_INTERCEPTOR = new HttpResponseInterceptor() {
+		
+		@Override
+		public void process(HttpResponse response, HttpContext context)
+				throws HttpException, IOException {
+			// TODO Auto-generated method stub
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                Header ceheader = entity.getContentEncoding();
+                if (ceheader != null) {
+                    HeaderElement[] codecs = ceheader.getElements();
+                    for (int i = 0; i < codecs.length; i++) {
+                        if (codecs[i].getName().equalsIgnoreCase("gzip")) {
+                            response.setEntity(
+                                    new GzipDecompressingEntity(response.getEntity()));
+                            return;
+                        }
+                    }
+                }
+            }
+		}
+	};
 	
 	private HttpClient httpClient;
 	private HashMap<String, String> mHeaders;
 	protected Context mContext;
+	private boolean gzipEnable = true;
 	
 	public HttpDataFetch(){
 		this(null);
@@ -66,6 +116,10 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	}
 	
 	public HttpDataFetch(Context context, boolean https){
+		this(context, https, true);
+	}
+	
+	public HttpDataFetch(Context context, boolean https, boolean gzip){
 		mContext = context;
 		if (https){
 			httpClient = getNewHttpClient();
@@ -74,6 +128,13 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 		}
 		httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 15000); 
 		httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 10000); 
+		gzipEnable = gzip;
+		
+		if (gzipEnable){
+			DefaultHttpClient defaultHttpClient = (DefaultHttpClient) httpClient;
+			defaultHttpClient.addRequestInterceptor(HTTP_REQUEST_INTERCEPTOR);
+			defaultHttpClient.addResponseInterceptor(HTTP_RESPONSE_INTERCEPTOR);
+		}
 	}
 	
 	
