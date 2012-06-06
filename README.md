@@ -27,4 +27,4 @@ Log
 #### v0.2.1
 
 * add GZIP supports for simple http
-* add local cache for ImageDownloder
+* add local cache for ImageDownloder, open memory cache auto clear.

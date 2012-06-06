@@ -58,7 +58,7 @@ public class ImageDownloader {
 	public static final int NO_DEFAULT_PIC = -1;
 	public static final String CACHE_PATH = "/sdcard/zicache/";
     private static final String LOG_TAG = "ImageDownloader";
-    private static Boolean AUTO_CLEAR = false;	// is auto clear cache
+    private static Boolean AUTO_CLEAR = true;	// is auto clear cache
     
 
     public enum Mode { NO_ASYNC_TASK, NO_DOWNLOADED_DRAWABLE, CORRECT }
@@ -90,11 +90,18 @@ public class ImageDownloader {
     private void initCacheFolder(){
     	File f = new File(CACHE_PATH);
     	if (!f.exists()){
-    		f.mkdirs();
+    		if (f.mkdirs()){
+    			// new cache folder created
+    		}else{
+    			// can't create cache folder
+    			// so don't auto clear the memory cache
+    			AUTO_CLEAR = false;
+    		}
     		Log.i(LOG_TAG, "make cache dirs");
     	}else{
     		Log.i(LOG_TAG, "cache dir exists");
     	}
+    	f = null;
     }
     
     public void download(String url, ImageView imageView){
@@ -353,7 +360,7 @@ public class ImageDownloader {
     /**
      * MD5的reference
      */
-    ConcurrentHashMap<String, WeakReference<String>> mWeakMD5Map = new ConcurrentHashMap<String, WeakReference<String>>();
+    ConcurrentHashMap<String, WeakReference<String>> mWeakMD5Map = new ConcurrentHashMap<String, WeakReference<String>>(HARD_CACHE_CAPACITY);
     
     /**
      * 获取一个URL的MD5值
@@ -444,6 +451,29 @@ public class ImageDownloader {
     	}
     	Bitmap bitmap = BitmapFactory.decodeFile(f.getAbsolutePath());
     	return bitmap;
+    }
+    
+    /**
+     * 移除本地图片缓存<br>
+     * 可以视情况，是否开线程处理
+     * @param url
+     */
+    public void removeImageFromSD(String url){
+    	removeImageFromSDSingle(url);
+    }
+    
+    /**
+     * 移除本地图片缓存<br>
+     * 没有开新线程
+     * @param url
+     */
+    private void removeImageFromSDSingle(String url){
+    	String fileName = getUrlMd5(url);
+    	File f = getCacheFile(fileName);
+    	if (f.exists()){
+    		f.delete();
+    	}
+    	f = null;
     }
 
     /**
@@ -537,7 +567,7 @@ public class ImageDownloader {
      */
     
     private static final int HARD_CACHE_CAPACITY = 10;
-    private static final int DELAY_BEFORE_PURGE = 10 * 1000; // in milliseconds
+    private static final int DELAY_BEFORE_PURGE = 15 * 1000; // in milliseconds
 
     // Hard cache, with a fixed maximum capacity and a life duration
     @SuppressWarnings("serial")
@@ -563,6 +593,7 @@ public class ImageDownloader {
     private final Runnable purger = new Runnable() {
         public void run() {
             clearCache();
+            Log.i(LOG_TAG, "clear memory cache");
         }
     };
 
@@ -618,6 +649,7 @@ public class ImageDownloader {
     public void removeFromCache(String url){
     	sHardBitmapCache.remove(url);
     	sSoftBitmapCache.remove(url);
+    	removeImageFromSD(url);
     }
  
     /**
