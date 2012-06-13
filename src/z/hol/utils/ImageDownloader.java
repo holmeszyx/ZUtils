@@ -414,7 +414,7 @@ public class ImageDownloader {
 	    	String fileName = getUrlMd5(url);
 	    	try {
 				FileOutputStream outStream = new FileOutputStream(getCacheFile(fileName));
-				bitmap.compress(Bitmap.CompressFormat.PNG, 80, outStream);
+				bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream);
 				outStream.flush();
 				outStream.close();
 				changeFileLastModifyTime(fileName);

@@ -28,3 +28,7 @@ Log
 
 * add GZIP supports for simple http
 * add local cache for ImageDownloder, open memory cache auto clear.
+* change cached image quality
+* add phone state unity
+* add a always marquee TextView
+* add Textview foreground color tool, Foreground. It can change TextView text spancolor with regex
