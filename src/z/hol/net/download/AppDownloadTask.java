@@ -93,7 +93,9 @@ public class AppDownloadTask implements Task, DownloadListener{
 	@Override
 	public void cancel() {
 		// TODO Auto-generated method stub
-		downloader.cancel();
+		if (downloader != null){
+			downloader.cancel();
+		}
 	}
 
 	@Override

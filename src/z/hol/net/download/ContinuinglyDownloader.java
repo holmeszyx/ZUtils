@@ -1,5 +1,6 @@
 package z.hol.net.download;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +23,7 @@ import z.hol.general.ConcurrentCanceler;
  *
  */
 public class ContinuinglyDownloader implements Runnable{
+	public static final int MAX_REAPEAT_TIMES = 3;
 	
 	private long blockSize;
 	private long startPos;
@@ -33,6 +35,7 @@ public class ContinuinglyDownloader implements Runnable{
 	private int mThreadIndex;
 	private CountDownLatch mCountDownLatch;
 	private ConcurrentCanceler mCanceler;
+	private int mErrorTimes = 0;
 	
 	public ContinuinglyDownloader(String url, long blockSize, long startPos, int threadIndex, String filePath){
 		this.url = url;
@@ -58,6 +61,13 @@ public class ContinuinglyDownloader implements Runnable{
 	 * @throws DowloadException
 	 */
 	private void initSavaFile() throws DowloadException{
+		File saveFile = new File(filePath);
+		File path = saveFile.getParentFile();
+		if (!path.exists()){
+			path.mkdirs();
+		}
+		path = null;
+		saveFile = null;
 		try {
 			file = new RandomAccessFile(filePath, "rw");
 			file.seek(startPos);
@@ -74,7 +84,7 @@ public class ContinuinglyDownloader implements Runnable{
 	 * 当下载文件大小未知时，先获取文件大小
 	 */
 	private boolean perpareFileSize(){
-		if (startPos == -1){
+		if (startPos <= 0){
 			try {
 				blockSize = MultiThreadDownload.getUrlContentLength(url);
 			} catch (IOException e) {
@@ -105,6 +115,9 @@ public class ContinuinglyDownloader implements Runnable{
 	 * @return
 	 */
 	public int getBlockPercent(){
+		if (blockSize <= 0){
+			return 0;
+		}
 		long current = blockSize - maxRemain;
 		if (current < 0){
 			current = 0;
@@ -122,6 +135,11 @@ public class ContinuinglyDownloader implements Runnable{
 		}
 		
 		if (!perpareFileSize()){
+			mErrorTimes ++;
+			if (mErrorTimes > MAX_REAPEAT_TIMES){
+				onDownloadError(404);
+				return;
+			}
 			try {
 				System.out.println("get file size error. " + url);
 				Thread.sleep(3000);
@@ -132,6 +150,8 @@ public class ContinuinglyDownloader implements Runnable{
 			startDownload();
 			return;
 		}
+		
+		mErrorTimes = 0;
 		
 		try {
 			initSavaFile();
