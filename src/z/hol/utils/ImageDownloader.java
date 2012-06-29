@@ -35,6 +35,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import z.hol.utils.codec.DigestUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -179,6 +180,7 @@ public class ImageDownloader {
         // State sanity: url is guaranteed to never be null in DownloadedDrawable and cache keys.
         if (url == null) {
             imageView.setImageDrawable(null);
+            imageView.setTag(null);
             return;
         }
 
@@ -378,7 +380,7 @@ public class ImageDownloader {
     		}
     	}
     	
-    	String md5 = MD5Util.getMD5String(url).toLowerCase();
+    	String md5 = DigestUtils.md5Hex(url).toLowerCase();
     	md5Reference = new WeakReference<String>(md5);
     	mWeakMD5Map.put(url, md5Reference);
     	return md5;

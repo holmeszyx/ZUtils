@@ -30,7 +30,7 @@ public interface AppStatusSaver {
 		 public static final String VERSION_CODE = "ver_code";
 		 public static final String ICON = "icon";	
 		 public static final String START_POS = "start_pos";
-		 public static final String DEFAULT_SAVE_PATH = "/sdcard/mgyun/download/";
+		 public static final String DEFAULT_SAVE_PATH = "/sdcard/download/";
 	 }
 
 	 
