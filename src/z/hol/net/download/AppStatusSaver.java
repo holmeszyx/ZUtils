@@ -10,7 +10,7 @@ import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
  * @author holmes
  *
  */
-public interface AppStatusSaver {
+public interface AppStatusSaver extends DatabaseHandler{
 
 	/**
 	 * APP 数据字段名

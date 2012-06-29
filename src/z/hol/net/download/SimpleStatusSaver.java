@@ -14,16 +14,24 @@ import android.database.sqlite.SQLiteDatabase;
 
 public class SimpleStatusSaver implements AppStatusSaver{
 	
-	SimpleStateSaverDatabaseHelper dbHelper;
+	private SimpleStateSaverDatabaseHelper dbHelper;
+	private SQLiteDatabase db;
 	
 	public SimpleStatusSaver(Context context){
+		this(context, false);
+	}
+	
+	public SimpleStatusSaver(Context context, boolean readable){
 		dbHelper = new SimpleStateSaverDatabaseHelper(context);
+		if (readable)
+			db = getReadableDb();
+		else
+			db = getWriteableDb();
 	}
 
 	@Override
 	public void addAppDownload(SimpleApp app) {
 		// TODO Auto-generated method stub
-		SQLiteDatabase db = getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(APP._ID, app.getAppId());
 		values.put(APP.STATE, Task.STATE_PAUSE);
@@ -39,43 +47,35 @@ public class SimpleStatusSaver implements AppStatusSaver{
 		//db.execSQL("insert into app_download_task() ", );
 		values.put(APP.START_POS, 0);
 		db.insert(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, null, values);
-		db.close();
 	}
 
 	@Override
 	public void updateAppSize(long appId, long size) {
 		// TODO Auto-generated method stub
-		 SQLiteDatabase db = getWritableDatabase();
 		 ContentValues values = new ContentValues();
 		 values.put(APP.LEN, size);
 		 db.update(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, values, APP._ID+ "=" + appId, null);
-		 db.close();
 	}
 
 	@Override
 	public void updateAppDownloadPos(long appId, long currentPos) {
 		// TODO Auto-generated method stub
-		 SQLiteDatabase db = getWritableDatabase();
 		 ContentValues values = new ContentValues();
 		 values.put(APP.START_POS, currentPos);
 		 db.update(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, values, APP._ID+ "=" + appId, null);
-		 db.close();
 	}
 
 	@Override
 	public void changeAppTaskState(long appId, int state) {
 		// TODO Auto-generated method stub
-		 SQLiteDatabase db = getWritableDatabase();
 		 ContentValues values = new ContentValues();
 		 values.put(APP.STATE, state);
 		 db.update(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, values, APP._ID+ "=" + appId, null);
-		 db.close();
 	}
 
 	@Override
 	public AppDownloadTask getAppTask(long appId, AppDownloadTask task) {
 		// TODO Auto-generated method stub
-		 SQLiteDatabase db = getReadableDatabase();
 		 Cursor c = db.query(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, APP_TASK_PROJECTION, APP._ID + "=" + appId, null, null, null, null);
 		 if (c != null && c.moveToFirst()){
 			 SimpleApp app = task.getApp();
@@ -83,7 +83,6 @@ public class SimpleStatusSaver implements AppStatusSaver{
 			 task.setStartPos(c.getLong(7));
 		 }
 		 if (c != null) c.close();
-		 db.close();
 		 
 		return task;
 	}
@@ -107,7 +106,6 @@ public class SimpleStatusSaver implements AppStatusSaver{
 		
 		
 		List<AppDownloadTask> tasks = new ArrayList<AppDownloadTask>();
-		SQLiteDatabase db = getReadableDatabase();
 		Cursor c = db.query(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, APP_TASK_PROJECTION, null, null, null, null, null);
 		if (c != null){
 			while (c.moveToNext()){
@@ -130,7 +128,6 @@ public class SimpleStatusSaver implements AppStatusSaver{
 			}
 		}
 		if (c != null) c.close();
-		db.close();
 		
 		return tasks;
 	}
@@ -138,16 +135,53 @@ public class SimpleStatusSaver implements AppStatusSaver{
 	@Override
 	public void removeAppTask(long appId) {
 		// TODO Auto-generated method stub
-		SQLiteDatabase db = getWritableDatabase();
 		db.delete(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, APP._ID + "=" + appId, null);
-		db.close();
 	}
 
-	 private SQLiteDatabase getWritableDatabase(){
+	@Override
+	public SQLiteDatabase getWriteableDb() {
+		// TODO Auto-generated method stub
 		return dbHelper.getWritableDatabase();
-	 }
-	 
-	 private SQLiteDatabase getReadableDatabase(){
-		 return dbHelper.getReadableDatabase();
-	 }
+	}
+
+	@Override
+	public SQLiteDatabase getReadableDb() {
+		// TODO Auto-generated method stub
+		return dbHelper.getReadableDatabase();
+	}
+
+	@Override
+	public void closeDb() {
+		// TODO Auto-generated method stub
+		if (isOpened())
+			db.close();
+	}
+	
+	@Override
+	public boolean isOpened() {
+		// TODO Auto-generated method stub
+		if (db != null)
+			return db.isOpen();
+		
+		return false;
+	}
+
+	@Override
+	public void beginTransaction() {
+		// TODO Auto-generated method stub
+		db.beginTransaction();
+	}
+
+	@Override
+	public void setTransactionSuccessful() {
+		// TODO Auto-generated method stub
+		db.setTransactionSuccessful();
+	}
+
+	@Override
+	public void endTransaction() {
+		// TODO Auto-generated method stub
+		db.endTransaction();
+	}
+
 }

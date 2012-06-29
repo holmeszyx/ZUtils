@@ -134,6 +134,7 @@ public class ContinuinglyDownloader implements Runnable{
 			return;
 		}
 		
+		onPrepare();
 		if (!perpareFileSize()){
 			mErrorTimes ++;
 			if (mErrorTimes > MAX_REAPEAT_TIMES){
@@ -323,6 +324,13 @@ public class ContinuinglyDownloader implements Runnable{
 	}
 	
 	/**
+	 * 准备下载
+	 */
+	protected void onPrepare(){
+		
+	}
+	
+	/**
 	 * 取消
 	 */
 	public void cancel(){
@@ -366,6 +374,12 @@ public class ContinuinglyDownloader implements Runnable{
 		 * @param id
 		 */
 		public void onComplete(long id);
+		
+		/**
+		 * 准备下载
+		 * @param id
+		 */
+		public void onPrepare(long id);
 		
 		/**
 		 * 下载开始

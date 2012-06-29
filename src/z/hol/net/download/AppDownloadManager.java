@@ -29,6 +29,10 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 		return downloadManager;
 	}
 	
+	public void closeStatusDb(){
+		mStatusSaver.closeDb();
+	}
+	
 	public void registUIHandler(DownloadUIHandler uiHandler){
 		mDownloadUIHandlerList.add(uiHandler);
 	}
@@ -122,6 +126,16 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 		while(iter.hasNext()){
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.progress(id, total, current);
+		}
+	}
+
+	@Override
+	public void onPrepare(long id) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.onPrepare(id);
 		}
 	}
 

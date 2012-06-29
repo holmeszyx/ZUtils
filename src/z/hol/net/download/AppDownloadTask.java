@@ -142,4 +142,13 @@ public class AppDownloadTask implements Task, DownloadListener{
 		}
 	}
 
+	@Override
+	public void onPrepare(long id) {
+		// TODO Auto-generated method stub
+		mState = STATE_PERPARE;
+		if (mListener != null){
+			mListener.onPrepare(id);
+		}
+	}
+
 }
