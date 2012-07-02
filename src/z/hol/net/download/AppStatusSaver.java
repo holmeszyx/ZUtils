@@ -37,8 +37,9 @@ public interface AppStatusSaver extends DatabaseHandler{
 	 /**
 	  * 添加一个APP下载,并加入初始化数据
 	  * @param app
+	  * @param saveFile
 	  */
-	 public void addAppDownload(SimpleApp app);
+	 public void addAppDownload(SimpleApp app, String saveFile);
 	 
 	 /**
 	  * 更新APP的大小 

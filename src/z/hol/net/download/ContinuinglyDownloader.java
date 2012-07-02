@@ -24,7 +24,11 @@ import z.hol.general.ConcurrentCanceler;
  */
 public class ContinuinglyDownloader implements Runnable{
 	public static final int MAX_REAPEAT_TIMES = 3;
+	public static final int MAX_TRY_AGAIN_TIMES = 5;
 	
+	private boolean autoTryAgain = true;
+	private int mMaxTryAgainTimes = MAX_TRY_AGAIN_TIMES;
+	private int mAlreadyTryTimes = 0;
 	private long blockSize;
 	private long startPos;
 	// private long endPos;
@@ -56,6 +60,10 @@ public class ContinuinglyDownloader implements Runnable{
 		mCountDownLatch = countDownLatch;
 	}
 	
+	public String getSaveFilePath(){
+		return filePath;
+	}
+	
 	/**
 	 * 初始化文件
 	 * @throws DowloadException
@@ -83,7 +91,7 @@ public class ContinuinglyDownloader implements Runnable{
 	/**
 	 * 当下载文件大小未知时，先获取文件大小
 	 */
-	private boolean perpareFileSize(){
+	private boolean prepareFileSize(){
 		if (startPos <= 0){
 			try {
 				blockSize = MultiThreadDownload.getUrlContentLength(url);
@@ -135,7 +143,7 @@ public class ContinuinglyDownloader implements Runnable{
 		}
 		
 		onPrepare();
-		if (!perpareFileSize()){
+		if (!prepareFileSize()){
 			mErrorTimes ++;
 			if (mErrorTimes > MAX_REAPEAT_TIMES){
 				onDownloadError(404);
@@ -161,10 +169,23 @@ public class ContinuinglyDownloader implements Runnable{
 			e.printStackTrace();
 		}
 		
-		InputStream in = null;
 		onStart(startPos, maxRemain, blockSize);
+		doDownload();
+	}
+	
+	/**
+	 * 文件下载
+	 */
+	private void doDownload(){
+		InputStream in = null;
 		try {
+			if (isCanceled()){
+				restoreTryTimes();
+				onCancel();
+				return;
+			}
 			if (isAleadyComplete(startPos, maxRemain, blockSize)){
+				restoreTryTimes();
 				return;
 			}
 			URL httpUrl = new URL(url);
@@ -178,17 +199,19 @@ public class ContinuinglyDownloader implements Runnable{
 				}
 			}else{
 				System.out.println(mThreadIndex + " http status code is " + conn.getResponseCode());
+				restoreTryTimes();
 				onDownloadError(conn.getResponseCode());
 			}
+			conn.disconnect();
 			
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			onDownloadError(0);
+			invokeTryAgainError(0);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			onDownloadError(0);
+			invokeTryAgainError(0);
 		}finally{
 			if (in != null){
 				try {
@@ -198,12 +221,55 @@ public class ContinuinglyDownloader implements Runnable{
 					e.printStackTrace();
 				}
 			}
+			if (!isNeedTryAgain()){
+				try {
+					file.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		if (isNeedTryAgain()){
+			System.out.println("try reconnect for download," + url);
 			try {
-				file.close();
-			} catch (IOException e) {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			doDownload();
+		}
+	}
+	
+	/**
+	 * 是否要重连
+	 * @return
+	 */
+	private boolean isNeedTryAgain(){
+		return (mAlreadyTryTimes > 0) ? true : false;
+	}
+	
+	/**
+	 * 重置重连次数
+	 */
+	private void restoreTryTimes(){
+		mAlreadyTryTimes = 0;
+	}
+	
+	/**
+	 * 自动重连失败
+	 * @param errorCode
+	 */
+	private void invokeTryAgainError(int errorCode){
+		if (autoTryAgain){
+			mAlreadyTryTimes ++;
+			if (mAlreadyTryTimes > mMaxTryAgainTimes){
+				onDownloadError(errorCode);
+			}
+		}else{
+			onDownloadError(errorCode);
 		}
 	}
 	
@@ -226,6 +292,7 @@ public class ContinuinglyDownloader implements Runnable{
 		int len = 0;
 		cc.start();
 		while ((len = in.read(buff, 0, readLen)) != -1){
+			restoreTryTimes();
 			file.write(buff, 0, len);
 			maxRemain -= len;
 			startPos += len;

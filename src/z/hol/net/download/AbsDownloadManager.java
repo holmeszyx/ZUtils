@@ -1,20 +1,26 @@
 package z.hol.net.download;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
 import android.os.Handler;
 import android.os.Message;
 
 /**
- * 下载管理器
+ * 下载管理器<br>
+ * 如果要限制最大同时运行的task数量，一定要控制好{@link #taskStarted()}和 {@link #taskStoped()}
  * @author holmes
  *
  */
 public abstract class AbsDownloadManager {
+	private static final int DEFAULT_MAX_RUNNING = 2;
 	
 	/**
-	 * 任务
+	 * 任务<br>
+	 * {@link Task#STATE_WAIT} --> {@link Task#STATE_PERPARE} --> {@link Task#STATE_RUNNING}<br>
+	 * --> {@link Task#STATE_PAUSE} --> {@link Task#STATE_COMPLETE}
 	 * @author holmes
 	 *
 	 */
@@ -24,6 +30,18 @@ public abstract class AbsDownloadManager {
 		public static final int STATE_RUNNING = 1;
 		public static final int STATE_PAUSE = 2;
 		public static final int STATE_COMPLETE = 3;
+		public static final int STATE_WAIT = 4;
+		
+		
+		/**
+		 * 等待开始
+		 */
+		public void waitForStart();
+		
+		/**
+		 * 结束等等，可以开始运行
+		 */
+		public void notifyStart();
 		
 		/**
 		 * 开始
@@ -60,8 +78,38 @@ public abstract class AbsDownloadManager {
 	}
 	
 	private HashMap<Long, Task> taskMap;
+	private ConcurrentLinkedQueue<Task> mWaitQueue;
+	private AtomicInteger mRunningTask;
+	private int mMaxRunning = DEFAULT_MAX_RUNNING;
+	private DownloadTaskListener mDownloadTaskListener;
+	
 	public AbsDownloadManager(){
 		taskMap = new HashMap<Long, AbsDownloadManager.Task>();
+		mWaitQueue = new ConcurrentLinkedQueue<AbsDownloadManager.Task>();
+		mRunningTask = new AtomicInteger(0);
+	}
+	
+	public void setDownloadTaskListener(DownloadTaskListener listener){
+		mDownloadTaskListener = listener;
+	}
+	
+	/**
+	 * 设置最大同时运行的task数量
+	 * @param limit 同时运行的task数，如果为 0 则无限制
+	 */
+	public void setMaxRunningTaskLimit(int limit){
+		if (limit < 0){
+			throw new IllegalArgumentException("the limit must be greater than or equal to 0, but now you give a " + limit);
+		}
+		mMaxRunning = limit;
+	}
+	
+	/**
+	 * 获取最大同时运行Task数
+	 * @return
+	 */
+	public int getMaxRunningTaskLimit(){
+		return mMaxRunning;
 	}
 	
 	
@@ -82,10 +130,11 @@ public abstract class AbsDownloadManager {
 	 * @return
 	 */
 	public boolean addTask(Task task, boolean autoStart){
-		if (taskMap.get(task.getTaskId()) == null){
+		if (!hasTask(task)){
 			taskMap.put(task.getTaskId(), task);
+			invokeDownloadAdd(task.getTaskId());
 			if (autoStart){
-				task.start();
+				startTask(task);
 			}
 			return true;
 		}
@@ -102,13 +151,49 @@ public abstract class AbsDownloadManager {
 	}
 	
 	/**
+	 * Task是否存在
+	 * @param task
+	 * @return
+	 */
+	public boolean hasTask(Task task){
+		if (taskMap.get(task.getTaskId()) == null)
+			return false;
+		else
+			return true;
+	}
+	
+	/**
 	 * 开始一个任务
 	 * @param taskId
 	 * @return
 	 */
 	public boolean startTask(long taskId){
 		Task task = getTask(taskId);
+		return startTask(task);
+		/*
 		if (task != null){
+			int status = task.getStatus();
+			if (status == Task.STATE_PAUSE){
+				task.goon();
+			}else{
+				task.start();
+			}
+			return true;
+		}
+		return false;
+		*/
+	}
+	
+	private boolean startTask(Task task){
+		if (task != null){
+			if (isNeedToWait()){
+				task.waitForStart();
+				waitTask(task);
+				invokeDownloadWait(task.getTaskId());
+				return false;
+			}
+			taskStarted();
+			task.notifyStart();
 			int status = task.getStatus();
 			if (status == Task.STATE_PAUSE){
 				task.goon();
@@ -121,6 +206,91 @@ public abstract class AbsDownloadManager {
 	}
 	
 	/**
+	 * 一个任务已运行<br>
+	 * 正在运行的任务数加一
+	 */
+	protected void taskStarted(){
+		mRunningTask.incrementAndGet();
+		System.out.println("runing+: " + getRunningTaskCount());
+	}
+	
+	/**
+	 * 一个任务已停止运行<br>
+	 * 暂停，完成，出错<br>
+	 * 正在运行的任务数减一
+	 */
+	protected void taskStoped(){
+		mRunningTask.decrementAndGet();
+		System.out.println("runing-: " + getRunningTaskCount());
+	}
+	
+	/**
+	 * 获取运行已任务的数量
+	 * @return
+	 */
+	public int getRunningTaskCount(){
+		return mRunningTask.get();
+	}
+	
+	/**
+	 * 是否需要将task放入等等队列<br>
+	 * 主要是有很task在运行
+	 * @return
+	 */
+	private boolean isNeedToWait(){
+		if (mMaxRunning == 0 || getRunningTaskCount() < mMaxRunning){
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * 将Task放入等待队列
+	 * @param task
+	 * @return
+	 */
+	private boolean waitTask(Task task){
+		return mWaitQueue.add(task);
+	}
+	
+	/**
+	 * 从等待队列拿出一个task
+	 * @return
+	 */
+	private Task notifyTask(){
+		return mWaitQueue.poll();
+	}
+	
+	private boolean cancelWaitTask(Task task){
+		if (task == null){
+			return false;
+		}
+		onCancelWaitTask(task);
+		task.notifyStart();
+		return mWaitQueue.remove(task);
+	}
+	
+	/**
+	 * 当等待的Task被取消时执行
+	 * @param task
+	 */
+	protected void onCancelWaitTask(Task task){
+		
+	}
+	
+	/**
+	 * 启动一个等待的任务
+	 */
+	public void startWaitTask(){
+		if (!isNeedToWait()){
+			Task task = notifyTask();
+			if (task != null){
+				startTask(task);
+			}
+		}
+	}
+	
+	/**
 	 * 取消一个任务
 	 * @param taskId
 	 * @return
@@ -129,6 +299,9 @@ public abstract class AbsDownloadManager {
 		Task task = getTask(taskId);
 		if (task != null){
 			task.cancel();
+			if (task.getStatus() == Task.STATE_WAIT){
+				cancelWaitTask(task);
+			}
 			return true;
 		}
 		return false;
@@ -167,7 +340,17 @@ public abstract class AbsDownloadManager {
 		return taskMap.get(taskId);
 	}
 	
+	private void invokeDownloadAdd(long id){
+		if (mDownloadTaskListener != null){
+			mDownloadTaskListener.onAdd(id);
+		}
+	}
 	
+	private void invokeDownloadWait(long id){
+		if (mDownloadTaskListener != null){
+			mDownloadTaskListener.onWait(id);
+		}
+	}
 	
 	/**
 	 * 下载管理器，回调事件
@@ -180,6 +363,8 @@ public abstract class AbsDownloadManager {
 		public static final int TYPE_CANCEL = 3;
 		public static final int TYPE_ERROR = 4;
 		public static final int TYPE_COMPLETE = 5;
+		public static final int TYPE_ADD = 6;
+		public static final int TYPE_WAIT = 7;
 		
 		public int type;
 		public long id;
@@ -197,7 +382,24 @@ public abstract class AbsDownloadManager {
 			return e;
 		}
 	}
-
+	
+	/**
+	 * 下载管理器任务状态回调
+	 */
+	public static interface DownloadTaskListener extends DownloadListener{
+		
+		/**
+		 * 任务添加
+		 * @param id
+		 */
+		public void onAdd(long id);
+		
+		/**
+		 * 任务等待
+		 * @param id
+		 */
+		public void onWait(long id);
+	}
 	
 	/**
 	 * 下载管理器的UI回调<br>
@@ -205,7 +407,7 @@ public abstract class AbsDownloadManager {
 	 * @author holmes
 	 *
 	 */
-	public static abstract class DownloadUIHandler extends Handler implements DownloadListener{
+	public static abstract class DownloadUIHandler extends Handler implements DownloadTaskListener{
 
 		@Override
 		public void handleMessage(Message msg) {
@@ -230,6 +432,12 @@ public abstract class AbsDownloadManager {
 					break;
 				case Event.TYPE_PROGRESS:
 					onProgress(e.id, e.total, e.current);
+					break;
+				case Event.TYPE_ADD:
+					onAdd(e.id);
+					break;
+				case Event.TYPE_WAIT:
+					onWait(e.id);
 					break;
 				}
 			}
@@ -294,5 +502,22 @@ public abstract class AbsDownloadManager {
 			obtainMessage(e.type, e).sendToTarget();
 		}
 		
+		void taskAdd(long id){
+			if (!filterId(id)) return;
+			
+			Event e = Event.obtain();
+			e.type = Event.TYPE_ADD;
+			e.id = id;
+			obtainMessage(e.type, e).sendToTarget();
+		}
+		
+		void taskWait(long id){
+			if (!filterId(id)) return;
+			
+			Event e = Event.obtain();
+			e.type = Event.TYPE_WAIT;
+			e.id = id;
+			obtainMessage(e.type, e).sendToTarget();
+		}
 	}	
 }

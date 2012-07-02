@@ -2,7 +2,6 @@ package z.hol.net.download;
 
 import z.hol.model.SimpleApp;
 import z.hol.net.download.AbsDownloadManager.Task;
-import z.hol.net.download.utils.AppDownloadUtils;
 
 public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	
@@ -10,8 +9,8 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	private SimpleApp mApp;
 	private AppStatusSaver mStatusSaver;
 	
-	public FileContinuinglyDownloader(SimpleApp app, long startPos, AppStatusSaver saver, DownloadListener listener){
-		super(app.getAppUrl(), app.getSize(), startPos, 0, AppDownloadUtils.getAppSavePath(app.getPackageName()));
+	public FileContinuinglyDownloader(SimpleApp app,String saveFile, long startPos, AppStatusSaver saver, DownloadListener listener){
+		super(app.getAppUrl(), app.getSize(), startPos, 0, saveFile);
 		mApp = app;
 		mListener = listener;
 		mStatusSaver = saver;
@@ -43,6 +42,16 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 		// TODO Auto-generated method stub
 		super.onPerpareFileSizeDone(total);
 		mStatusSaver.updateAppSize(mApp.getAppId(), total);
+	}
+	
+	@Override
+	protected void onPrepare() {
+		// TODO Auto-generated method stub
+		super.onPrepare();
+		mStatusSaver.changeAppTaskState(mApp.getAppId(), Task.STATE_PERPARE);
+		if (mListener != null){
+			mListener.onPrepare(mApp.getAppId());
+		}
 	}
 
 	@Override

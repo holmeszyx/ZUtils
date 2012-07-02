@@ -2,23 +2,27 @@ package z.hol.net.download;
 
 
 import z.hol.model.SimpleApp;
-import z.hol.net.download.AbsDownloadManager.Task;
 import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
+import z.hol.net.download.task.AppTask;
 
-public class AppDownloadTask implements Task, DownloadListener{
+public class AppDownloadTask implements AppTask, DownloadListener{
 	
 	private FileContinuinglyDownloader downloader;
 	private SimpleApp mApp;
 	private Thread mThread;
-	private int mState = STATE_PERPARE;
+	private int mState = STATE_INVALID;
 	private DownloadListener mListener;
 	private AppStatusSaver mStatusSaver;
-	private long startPos;
+	private long startPos = 0l;
+	private long total = 0l;
+	private String mSavePath = null;
+	private boolean isWait = false;
 	
-	public AppDownloadTask(SimpleApp app, long startPos, AppStatusSaver saver, DownloadListener listener){
+	public AppDownloadTask(SimpleApp app, String savePath, long startPos, AppStatusSaver saver, DownloadListener listener){
 		mApp = app;
 		mStatusSaver = saver;
 		mListener = listener;
+		mSavePath = savePath;
 		this.startPos = startPos;
 	}
 	
@@ -26,13 +30,21 @@ public class AppDownloadTask implements Task, DownloadListener{
 		return mApp;
 	}
 	
+	@Override
 	public void setStartPos(long startPos){
 		this.startPos = startPos;
+	}
+	
+	public void setTotal(long total){
+		this.total = total;
 	}
 	
 	@Override
 	public int getStatus() {
 		// TODO Auto-generated method stub
+		if (isWait){
+			return STATE_WAIT;
+		}
 		return mState;
 	}
 	
@@ -42,11 +54,50 @@ public class AppDownloadTask implements Task, DownloadListener{
 	void setStatus(int state){
 		mState = state;
 	}
+	
+	@Override
+	public String setFileSavePath(String filePath) {
+		// TODO Auto-generated method stub
+		if (mSavePath == null){
+			mSavePath = filePath;
+		}
+		return mSavePath;
+	}
+
+	@Override
+	public String getFileSavePath() {
+		// TODO Auto-generated method stub
+		return mSavePath;
+	}
+	
+	@Override
+	public long getCurrentPos() {
+		// TODO Auto-generated method stub
+		return startPos;
+	}
+
+	@Override
+	public long getTotal() {
+		// TODO Auto-generated method stub
+		return total;
+	}
 
 	@Override
 	public long getTaskId() {
 		// TODO Auto-generated method stub
 		return mApp.getAppId();
+	}
+	
+	@Override
+	public void waitForStart() {
+		// TODO Auto-generated method stub
+		isWait = true;
+	}
+
+	@Override
+	public void notifyStart() {
+		// TODO Auto-generated method stub
+		isWait = false;
 	}
 
 	@Override
@@ -55,22 +106,22 @@ public class AppDownloadTask implements Task, DownloadListener{
 		if (mState == STATE_PAUSE){
 			mStatusSaver.getAppTask(getTaskId(), this);
 			doStart();
-			mState = STATE_RUNNING;
 		}
 	}
 
 	@Override
 	public void start() {
 		// TODO Auto-generated method stub
-		mStatusSaver.addAppDownload(mApp);
 		doStart();
-		mState = STATE_RUNNING;
 	}
 	
 	@Override
 	public int getPercent() {
 		// TODO Auto-generated method stub
 		if (downloader == null){
+			if (total > 0){
+				return AbsDownloadManager.computePercent(total, startPos);
+			}
 			return 0;
 		}
 		return downloader.getBlockPercent();
@@ -81,13 +132,14 @@ public class AppDownloadTask implements Task, DownloadListener{
 			// 有任务正在运行，或者已完成，不用再执行
 			return;
 		}
+		mState = STATE_RUNNING;
 		prepareDownlader();
 		mThread = new Thread(downloader);
 		mThread.start();
 	}
 	
 	private void prepareDownlader(){
-		downloader = new FileContinuinglyDownloader(mApp, startPos, mStatusSaver, this);
+		downloader = new FileContinuinglyDownloader(mApp, getFileSavePath(), startPos, mStatusSaver, this);
 	}
 
 	@Override
@@ -110,6 +162,7 @@ public class AppDownloadTask implements Task, DownloadListener{
 	@Override
 	public void onStart(long id, long total, long current) {
 		// TODO Auto-generated method stub
+		mState = STATE_RUNNING;
 		if (mListener != null){
 			mListener.onStart(id, total, current);
 		}
@@ -137,6 +190,7 @@ public class AppDownloadTask implements Task, DownloadListener{
 	public void onProgress(long id, long total, long current) {
 		// TODO Auto-generated method stub
 		startPos = current;
+		this.total = total;
 		if (mListener != null){
 			mListener.onProgress(id, total, current);
 		}

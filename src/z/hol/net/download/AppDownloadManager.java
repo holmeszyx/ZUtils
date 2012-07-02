@@ -5,10 +5,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import z.hol.model.SimpleApp;
-import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
+import z.hol.net.download.AbsDownloadManager.DownloadTaskListener;
+import z.hol.net.download.utils.AppDownloadUtils;
 import android.content.Context;
 
-public class AppDownloadManager extends AbsDownloadManager implements DownloadListener{
+public class AppDownloadManager extends AbsDownloadManager implements DownloadTaskListener{
 
 	private Context mContext;
 	private AppStatusSaver mStatusSaver;
@@ -16,9 +17,11 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 	private List<DownloadUIHandler> mDownloadUIHandlerList;
 	
 	private AppDownloadManager(Context context){
+		super();
 		mContext = context;
 		mStatusSaver = new SimpleStatusSaver(mContext.getApplicationContext());
 		mDownloadUIHandlerList = new ArrayList<AppDownloadManager.DownloadUIHandler>();
+		setDownloadTaskListener(this);
 	}
 	
 	public static AppDownloadManager getInstance(Context context){
@@ -31,6 +34,10 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 	
 	public void closeStatusDb(){
 		mStatusSaver.closeDb();
+	}
+	
+	public AppStatusSaver getStatusSaver(){
+		return mStatusSaver;
 	}
 	
 	public void registUIHandler(DownloadUIHandler uiHandler){
@@ -46,7 +53,11 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 	}
 	
 	public boolean addTask(SimpleApp app){
-		AppDownloadTask task = new AppDownloadTask(app, -1, mStatusSaver, this);
+		String appSavePath = AppDownloadUtils.getAppSavePath(app.getPackageName());
+		AppDownloadTask task = new AppDownloadTask(app, appSavePath, -1, mStatusSaver, this);
+		if (!hasTask(task)){
+			mStatusSaver.addAppDownload(task.getApp(), task.getFileSavePath());
+		}
 		return super.addTask(task);
 	}
 	
@@ -78,6 +89,16 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 		super.onTaskRemove(taskId);
 		mStatusSaver.removeAppTask(taskId);
 	}
+	
+	@Override
+	protected void onCancelWaitTask(Task task) {
+		// TODO Auto-generated method stub
+		super.onCancelWaitTask(task);
+		if (task instanceof AppDownloadTask){
+			AppDownloadTask appTask = (AppDownloadTask) task;
+			appTask.onCancel(appTask.getTaskId());
+		}
+	}
 
 	@Override
 	public void onComplete(long id) {
@@ -87,6 +108,7 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.complete(id);
 		}
+		launchWaitTask();
 	}
 
 	@Override
@@ -107,6 +129,7 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.error(id, errorCode);
 		}
+		launchWaitTask();
 	}
 
 	@Override
@@ -116,6 +139,10 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 		while(iter.hasNext()){
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.cancel(id);
+		}
+		if (getTask(id).getStatus() != Task.STATE_WAIT){
+			// 如果不是暂停的等待Task
+			launchWaitTask();
 		}
 	}
 
@@ -138,5 +165,32 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadLi
 			uiHandler.onPrepare(id);
 		}
 	}
+	
+	@Override
+	public void onAdd(long id) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.onAdd(id);
+		}
+	}
 
+	@Override
+	public void onWait(long id) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.onWait(id);
+		}
+	}
+
+	/**
+	 * 尝试启动等待的Task
+	 */
+	private void launchWaitTask(){
+		taskStoped();
+		startWaitTask();
+	}
 }

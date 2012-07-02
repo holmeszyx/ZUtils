@@ -30,7 +30,7 @@ public class SimpleStatusSaver implements AppStatusSaver{
 	}
 
 	@Override
-	public void addAppDownload(SimpleApp app) {
+	public void addAppDownload(SimpleApp app, String saveFile) {
 		// TODO Auto-generated method stub
 		ContentValues values = new ContentValues();
 		values.put(APP._ID, app.getAppId());
@@ -40,7 +40,10 @@ public class SimpleStatusSaver implements AppStatusSaver{
 		values.put(APP.ICON, app.getIcon());
 		values.put(APP.NAME, app.getName());
 		values.put(APP.PACKAGE, app.getPackageName());
-		values.put(APP.SAVE_FILE, AppDownloadUtils.getAppSavePath(app.getPackageName()));
+		if (saveFile == null){
+			saveFile = AppDownloadUtils.getAppSavePath(app.getPackageName());
+		}
+		values.put(APP.SAVE_FILE, saveFile);
 		values.put(APP.URL, app.getAppUrl());
 		values.put(APP.VERSION_CODE, app.getVersionCode());
 		values.put(APP.VERSION_NAME, app.getVersionName());
@@ -79,8 +82,10 @@ public class SimpleStatusSaver implements AppStatusSaver{
 		 Cursor c = db.query(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, APP_TASK_PROJECTION, APP._ID + "=" + appId, null, null, null, null);
 		 if (c != null && c.moveToFirst()){
 			 SimpleApp app = task.getApp();
-			 app.setSize(c.getLong(2));
+			 long appSize = c.getLong(2);
+			 app.setSize(appSize);
 			 task.setStartPos(c.getLong(7));
+			 task.setTotal(appSize);
 		 }
 		 if (c != null) c.close();
 		 
@@ -112,17 +117,20 @@ public class SimpleStatusSaver implements AppStatusSaver{
 				SimpleApp app = new SimpleApp();
 				app.setAppId(c.getLong(0));
 				app.setIcon(c.getString(1));
-				app.setSize(c.getLong(2));
+				long appSize = c.getLong(2);
+				app.setSize(appSize);
 				app.setFormatedSize(c.getString(3));
 				app.setName(c.getString(4));
 				app.setPackageName(c.getString(5));
 				app.setAppUrl(c.getString(8));
 				app.setVersionCode(c.getInt(9));
 				app.setVersionName(c.getString(10));
+				String saveFile = c.getString(6);
 				long startPos = c.getLong(7);
 				int state = c.getInt(11);
 				
-				AppDownloadTask task = new AppDownloadTask(app, startPos, saver, listener);
+				AppDownloadTask task = new AppDownloadTask(app, saveFile, startPos, saver, listener);
+				task.setTotal(appSize);
 				task.setStatus(state);
 				tasks.add(task);
 			}

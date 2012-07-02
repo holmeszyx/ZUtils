@@ -1,6 +1,6 @@
 ZUtils
 ======
-Version 0.2.1
+Version 0.2.2
 
 Some android utils
 
@@ -24,6 +24,11 @@ Android Permission required
 
 Log
 ---
+#### v0.2.2
+* Optimizes the download manager.(SQLite)
+* Can limit the numbers of download task in the same time.
+* Add some new download manager callbacks, (onAdd, onWait)
+
 #### v0.2.1
 
 * add GZIP supports for simple http
