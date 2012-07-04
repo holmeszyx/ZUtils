@@ -1,6 +1,8 @@
 package z.hol.net.download;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -77,14 +79,14 @@ public abstract class AbsDownloadManager {
 		public int getPercent();
 	}
 	
-	private HashMap<Long, Task> taskMap;
+	private HashMap<Long, Task> mTaskMap;
 	private ConcurrentLinkedQueue<Task> mWaitQueue;
 	private AtomicInteger mRunningTask;
 	private int mMaxRunning = DEFAULT_MAX_RUNNING;
 	private DownloadTaskListener mDownloadTaskListener;
 	
 	public AbsDownloadManager(){
-		taskMap = new HashMap<Long, AbsDownloadManager.Task>();
+		mTaskMap = new HashMap<Long, AbsDownloadManager.Task>();
 		mWaitQueue = new ConcurrentLinkedQueue<AbsDownloadManager.Task>();
 		mRunningTask = new AtomicInteger(0);
 	}
@@ -131,7 +133,7 @@ public abstract class AbsDownloadManager {
 	 */
 	public boolean addTask(Task task, boolean autoStart){
 		if (!hasTask(task)){
-			taskMap.put(task.getTaskId(), task);
+			mTaskMap.put(task.getTaskId(), task);
 			invokeDownloadAdd(task.getTaskId());
 			if (autoStart){
 				startTask(task);
@@ -156,7 +158,7 @@ public abstract class AbsDownloadManager {
 	 * @return
 	 */
 	public boolean hasTask(Task task){
-		if (taskMap.get(task.getTaskId()) == null)
+		if (mTaskMap.get(task.getTaskId()) == null)
 			return false;
 		else
 			return true;
@@ -291,12 +293,33 @@ public abstract class AbsDownloadManager {
 	}
 	
 	/**
+	 * 取消所有任务
+	 */
+	public void cancelAllTask(){
+		mWaitQueue.clear();
+		Set<Entry<Long, Task>> taskSet = mTaskMap.entrySet();
+		for (Entry<Long, Task> taskEntry : taskSet){
+			Task task = taskEntry.getValue();
+			cancelTask(task);
+		}
+	}
+	
+	/**
 	 * 取消一个任务
 	 * @param taskId
 	 * @return
 	 */
 	public boolean cancelTask(long taskId){
 		Task task = getTask(taskId);
+		return cancelTask(task);
+	}
+	
+	/**
+	 * 取消一个任务
+	 * @param task
+	 * @return
+	 */
+	protected boolean cancelTask(Task task){
 		if (task != null){
 			task.cancel();
 			if (task.getStatus() == Task.STATE_WAIT){
@@ -316,7 +339,7 @@ public abstract class AbsDownloadManager {
 		Task task = getTask(taskId);
 		if (task != null){
 			task.cancel();
-			taskMap.remove(taskId);
+			mTaskMap.remove(taskId);
 			onTaskRemove(taskId);
 			return true;
 		}
@@ -337,7 +360,7 @@ public abstract class AbsDownloadManager {
 	 * @return
 	 */
 	public Task getTask(long taskId){
-		return taskMap.get(taskId);
+		return mTaskMap.get(taskId);
 	}
 	
 	private void invokeDownloadAdd(long id){
