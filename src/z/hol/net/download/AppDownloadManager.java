@@ -76,7 +76,8 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadTa
 		List<AppDownloadTask> tasks = mStatusSaver.getAppTaskList(mStatusSaver, this);
 		for (int i = 0; i < tasks.size(); i ++){
 			AppDownloadTask task = tasks.get(i);
-			if (task.getStatus() == Task.STATE_RUNNING){
+			int taskStatus = task.getStatus();
+			if (taskStatus == Task.STATE_RUNNING || taskStatus == Task.STATE_PERPARE || taskStatus == Task.STATE_WAIT){
 				task.setStatus(Task.STATE_PAUSE);
 			}
 			addTask(task, false);
@@ -162,7 +163,7 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadTa
 		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
 		while(iter.hasNext()){
 			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.onPrepare(id);
+			uiHandler.prepare(id);
 		}
 	}
 	

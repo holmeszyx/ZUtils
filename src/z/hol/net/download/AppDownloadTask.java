@@ -7,7 +7,7 @@ import z.hol.net.download.task.AppTask;
 
 public class AppDownloadTask implements AppTask, DownloadListener{
 	
-	private FileContinuinglyDownloader downloader;
+	private AppContinuinglyDownloader downloader;
 	private SimpleApp mApp;
 	private Thread mThread;
 	private int mState = STATE_INVALID;
@@ -139,7 +139,7 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 	}
 	
 	private void prepareDownlader(){
-		downloader = new FileContinuinglyDownloader(mApp, getFileSavePath(), startPos, mStatusSaver, this);
+		downloader = new AppContinuinglyDownloader(mApp, getFileSavePath(), startPos, mStatusSaver, this);
 	}
 
 	@Override

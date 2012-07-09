@@ -388,6 +388,7 @@ public abstract class AbsDownloadManager {
 		public static final int TYPE_COMPLETE = 5;
 		public static final int TYPE_ADD = 6;
 		public static final int TYPE_WAIT = 7;
+		public static final int TYPE_PREPARE = 8;
 		
 		public int type;
 		public long id;
@@ -462,6 +463,8 @@ public abstract class AbsDownloadManager {
 				case Event.TYPE_WAIT:
 					onWait(e.id);
 					break;
+				case Event.TYPE_PREPARE:
+					onPrepare(e.id);
 				}
 			}
 		}
@@ -521,6 +524,15 @@ public abstract class AbsDownloadManager {
 			
 			Event e = Event.obtain();
 			e.type = Event.TYPE_COMPLETE;
+			e.id = id;
+			obtainMessage(e.type, e).sendToTarget();
+		}
+		
+		void prepare(long id){
+			if (!filterId(id)) return;
+			
+			Event e = Event.obtain();
+			e.type = Event.TYPE_PREPARE;
 			e.id = id;
 			obtainMessage(e.type, e).sendToTarget();
 		}

@@ -223,7 +223,12 @@ public class ContinuinglyDownloader implements Runnable{
 			}
 			if (!isNeedTryAgain()){
 				try {
-					file.close();
+					if (file != null){
+						// the file will be null
+						// when sdcard no found
+						// 当没有sd卡时，file可能为null
+						file.close();
+					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

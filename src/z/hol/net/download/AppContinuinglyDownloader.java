@@ -3,13 +3,13 @@ package z.hol.net.download;
 import z.hol.model.SimpleApp;
 import z.hol.net.download.AbsDownloadManager.Task;
 
-public class FileContinuinglyDownloader extends ContinuinglyDownloader{
+public class AppContinuinglyDownloader extends ContinuinglyDownloader{
 	
 	private DownloadListener mListener;
 	private SimpleApp mApp;
 	private AppStatusSaver mStatusSaver;
 	
-	public FileContinuinglyDownloader(SimpleApp app,String saveFile, long startPos, AppStatusSaver saver, DownloadListener listener){
+	public AppContinuinglyDownloader(SimpleApp app,String saveFile, long startPos, AppStatusSaver saver, DownloadListener listener){
 		super(app.getAppUrl(), app.getSize(), startPos, 0, saveFile);
 		mApp = app;
 		mListener = listener;
@@ -20,10 +20,19 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 		}
 	}
 	
-	public FileContinuinglyDownloader(String url, long blockSize,
+	public AppContinuinglyDownloader(String url, long blockSize,
 			long startPos, int threadIndex, String filePath) {
 		super(url, blockSize, startPos, threadIndex, filePath);
 		// TODO Auto-generated constructor stub
+	}
+	
+	/**
+	 * 获取下载ID<br>
+	 * 一般是TaskID
+	 * @return
+	 */
+	public long getDownloadId(){
+		return mApp.getAppId();
 	}
 	
 	@Override
@@ -41,16 +50,16 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	protected void onPerpareFileSizeDone(long total) {
 		// TODO Auto-generated method stub
 		super.onPerpareFileSizeDone(total);
-		mStatusSaver.updateAppSize(mApp.getAppId(), total);
+		mStatusSaver.updateAppSize(getDownloadId(), total);
 	}
 	
 	@Override
 	protected void onPrepare() {
 		// TODO Auto-generated method stub
 		super.onPrepare();
-		mStatusSaver.changeAppTaskState(mApp.getAppId(), Task.STATE_PERPARE);
+		mStatusSaver.changeAppTaskState(getDownloadId(), Task.STATE_PERPARE);
 		if (mListener != null){
-			mListener.onPrepare(mApp.getAppId());
+			mListener.onPrepare(getDownloadId());
 		}
 	}
 
@@ -58,9 +67,9 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	protected void onStart(long startPos, long remain, long blockSize) {
 		// TODO Auto-generated method stub
 		super.onStart(startPos, remain, blockSize);
-		mStatusSaver.changeAppTaskState(mApp.getAppId(), Task.STATE_RUNNING);
+		mStatusSaver.changeAppTaskState(getDownloadId(), Task.STATE_RUNNING);
 		if (mListener != null){
-			mListener.onStart(mApp.getAppId(), blockSize, startPos);
+			mListener.onStart(getDownloadId(), blockSize, startPos);
 		}
 	}
 
@@ -68,9 +77,9 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	protected void saveBreakpoint(long startPos, long remain, long blockSize) {
 		// TODO Auto-generated method stub
 		super.saveBreakpoint(startPos, remain, blockSize);
-		mStatusSaver.updateAppDownloadPos(mApp.getAppId(), startPos);
+		mStatusSaver.updateAppDownloadPos(getDownloadId(), startPos);
 		if (mListener != null){
-			mListener.onProgress(mApp.getAppId(), blockSize, startPos);
+			mListener.onProgress(getDownloadId(), blockSize, startPos);
 		}
 	}
 
@@ -78,9 +87,9 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	protected void onBlockComplete() {
 		// TODO Auto-generated method stub
 		super.onBlockComplete();
-		mStatusSaver.changeAppTaskState(mApp.getAppId(), Task.STATE_COMPLETE);
+		mStatusSaver.changeAppTaskState(getDownloadId(), Task.STATE_COMPLETE);
 		if (mListener != null){
-			mListener.onComplete(mApp.getAppId());
+			mListener.onComplete(getDownloadId());
 		}
 	}
 
@@ -88,9 +97,9 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	protected void onDownloadError(int errorCode) {
 		// TODO Auto-generated method stub
 		super.onDownloadError(errorCode);
-		mStatusSaver.changeAppTaskState(mApp.getAppId(), Task.STATE_PAUSE);
+		mStatusSaver.changeAppTaskState(getDownloadId(), Task.STATE_PAUSE);
 		if (mListener != null){
-			mListener.onError(mApp.getAppId(), errorCode);
+			mListener.onError(getDownloadId(), errorCode);
 		}
 	}
 
@@ -98,9 +107,9 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	protected void onCancel() {
 		// TODO Auto-generated method stub
 		super.onCancel();
-		mStatusSaver.changeAppTaskState(mApp.getAppId(), Task.STATE_PAUSE);
+		mStatusSaver.changeAppTaskState(getDownloadId(), Task.STATE_PAUSE);
 		if (mListener != null){
-			mListener.onCancel(mApp.getAppId());
+			mListener.onCancel(getDownloadId());
 		}
 	}
 

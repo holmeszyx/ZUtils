@@ -9,6 +9,7 @@ public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
 	public static final int VERSION = 1;
 	public static final String DATABASE = "download_status.db";
 	public static final String TABLE_APP_TASK = "app_download_task";
+	public static final String TABLE_FILE_TASK = "file_download_task";
 	
 	public SimpleStateSaverDatabaseHelper(Context context){
 		this(context, DATABASE, null, VERSION);
