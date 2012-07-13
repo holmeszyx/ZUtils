@@ -615,7 +615,7 @@ public class ImageDownloader {
      * @param url The URL of the image that will be retrieved from the cache.
      * @return The cached bitmap or null if it was not found.
      */
-    private Bitmap getBitmapFromCache(String url) {
+    public Bitmap getBitmapFromCache(String url) {
         // First try the hard reference cache
         synchronized (sHardBitmapCache) {
             final Bitmap bitmap = sHardBitmapCache.get(url);

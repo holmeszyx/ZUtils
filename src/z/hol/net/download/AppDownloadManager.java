@@ -173,7 +173,7 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadTa
 		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
 		while(iter.hasNext()){
 			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.onAdd(id);
+			uiHandler.taskAdd(id);
 		}
 	}
 
@@ -183,7 +183,7 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadTa
 		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
 		while(iter.hasNext()){
 			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.onWait(id);
+			uiHandler.taskWait(id);
 		}
 	}
 

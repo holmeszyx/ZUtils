@@ -23,6 +23,7 @@ import z.hol.general.ConcurrentCanceler;
  *
  */
 public class ContinuinglyDownloader implements Runnable{
+	public static final int ERROR_CODE_SDCARD_NO_FOUND = 10404;
 	public static final int MAX_REAPEAT_TIMES = 3;
 	public static final int MAX_TRY_AGAIN_TIMES = 5;
 	
@@ -162,12 +163,14 @@ public class ContinuinglyDownloader implements Runnable{
 		
 		mErrorTimes = 0;
 		
+		// System.out.println("init file");
 		try {
 			initSavaFile();
 		} catch (DowloadException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		// System.out.println("start download");
 		
 		onStart(startPos, maxRemain, blockSize);
 		doDownload();
@@ -186,6 +189,10 @@ public class ContinuinglyDownloader implements Runnable{
 			}
 			if (isAleadyComplete(startPos, maxRemain, blockSize)){
 				restoreTryTimes();
+				return;
+			}
+			if (file == null){
+				onDownloadError(ERROR_CODE_SDCARD_NO_FOUND);
 				return;
 			}
 			URL httpUrl = new URL(url);

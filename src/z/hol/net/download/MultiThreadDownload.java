@@ -2,7 +2,9 @@ package z.hol.net.download;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.CountDownLatch;
 
@@ -79,18 +81,35 @@ public class MultiThreadDownload {
 
 	public static long getUrlContentLength(String fileUrl) throws IOException{
 		long length = -1;
+		length = getUrlContentLength(fileUrl, false);
+		return length;
+	}
+	
+	/**
+	 * 获取一个文件的大小<br>
+	 * 可以选Http方法HEAD或GET
+	 * 
+	 * @param fileUrl
+	 * @param methodHead 是否使用HEAD方法，否则为GET
+	 */
+	public static long getUrlContentLength(String fileUrl, boolean methodHead) throws IOException{
+		long length = -1;
 		URL url = new URL(fileUrl);
 
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-		conn.setRequestMethod("GET");
-		conn.setRequestMethod("GET");
+		if (methodHead){
+			conn.setRequestMethod("HEAD");
+		}else{
+			conn.setRequestMethod("GET");
+		}
 		conn.setRequestProperty("Accept", "image/gif, image/jpeg, image/pjpeg, image/pjpeg, application/x-shockwave-flash, application/xaml+xml, application/vnd.ms-xpsdocument, application/x-ms-xbap, application/x-ms-application, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*");
 		conn.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.6,en;q=0.4");
 		conn.setRequestProperty("Referer", ContinuinglyDownloader.getReferer(url));
 		conn.setRequestProperty("Charset", "UTF-8");
 		conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.168 Safari/535.19");
 		conn.setRequestProperty("Connection", "Keep-Alive");
-		conn.setConnectTimeout(30000);
+		conn.setConnectTimeout(15000);
+		conn.setReadTimeout(12000);
 		conn.connect();
 		
 		if (conn.getResponseCode() == 200){
