@@ -16,6 +16,9 @@
 
 package z.hol.utils.codec;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -105,6 +108,63 @@ public class DigestUtils {
     public static String md5Hex(String data) {
         return new String(Hex.encodeHex(md5(data)));
     }
+    
+    /**
+     * 计算流的MD5值
+     * @param in 输入流
+     * @return MD5 字节列
+     */
+    public static byte[] md5(InputStream in){
+    	MessageDigest md = getMd5Digest();
+    	return streamDigest(in, md);
+    }
+    
+    /**
+     * 计算流的MD5值
+     * @param in 输入流
+     * @return MD5 HEX值
+     */
+    public static String md5Hex(InputStream in){
+    	return new String(Hex.encodeHex(md5(in)));
+    }
+    
+    /**
+     * 计算流的散列值
+     * @param in
+     * @param md
+     * @param autoClose 是否自动关闭流
+     * @return
+     */
+    static byte[] streamDigest(InputStream in, MessageDigest md, boolean autoClose){
+    	DigestInputStream din = new DigestInputStream(in, md);
+    	byte[] buff = new byte[512];
+    	try{
+	    	while (din.read(buff) != -1){}
+    	} catch (IOException e) {
+			// TODO: handle exception
+    		e.printStackTrace();
+		}
+    	if (autoClose){
+	    	try {
+				din.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    	buff = null;
+    	return md.digest();    	
+    }
+    
+    /**
+     * like streamDigest(in, md, true)
+     * @param in
+     * @param md
+     * @return
+     */
+    static byte[] streamDigest(InputStream in, MessageDigest md){
+    	return streamDigest(in, md, true);
+    }
 
     /**
      * Calculates the SHA digest and returns the value as a 
@@ -127,6 +187,15 @@ public class DigestUtils {
     public static byte[] sha(String data) {
         return sha(data.getBytes());
     }
+    
+    /**
+     * 计算流的SHA值
+     * @param in
+     * @return SHA 字节列
+     */
+    public static byte[] sha(InputStream in) {
+        return streamDigest(in, getShaDigest());
+    }
 
     /**
      * Calculates the SHA digest and returns the value as a hex string.
@@ -148,4 +217,12 @@ public class DigestUtils {
         return new String(Hex.encodeHex(sha(data)));
     }
 
+    /**
+     * 计算流的SHA
+     * @param in
+     * @return SHA 的值
+     */
+    public static String shaHex(InputStream in) {
+        return new String(Hex.encodeHex(sha(in)));
+    }
 }

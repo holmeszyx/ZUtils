@@ -19,4 +19,31 @@ public interface FileStatusSaver extends DatabaseHandler{
 		 public static final String DATA4 = "data4";
 		 public static final String DATA5 = "data5";
 	}
+	
+	/**
+	 * 更新Task的块大小
+	 * @param id
+	 * @param size
+	 */
+	public void updateTaskSize(long id, long size);
+	
+	/**
+	 * 更新Task下载的断点
+	 * @param id
+	 * @param currentPos
+	 */
+	public void updateDownloadPos(long id, long currentPos);
+	
+	/**
+	 * 修改Task状态
+	 * @param id
+	 * @param state
+	 */
+	public void changeTaskState(long id, int state);
+	
+	/**
+	 * 删除Task
+	 * @param id
+	 */
+	public void removeTask(long id);
 }

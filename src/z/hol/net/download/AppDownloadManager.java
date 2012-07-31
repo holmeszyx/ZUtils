@@ -1,26 +1,22 @@
 package z.hol.net.download;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import z.hol.model.SimpleApp;
-import z.hol.net.download.AbsDownloadManager.DownloadTaskListener;
 import z.hol.net.download.utils.AppDownloadUtils;
 import android.content.Context;
 
-public class AppDownloadManager extends AbsDownloadManager implements DownloadTaskListener{
+public class AppDownloadManager extends AbsDownloadManager{
 
 	private Context mContext;
 	private AppStatusSaver mStatusSaver;
 	private static AppDownloadManager downloadManager;
-	private List<DownloadUIHandler> mDownloadUIHandlerList;
 	
 	private AppDownloadManager(Context context){
 		super();
 		mContext = context;
 		mStatusSaver = new SimpleStatusSaver(mContext.getApplicationContext());
-		mDownloadUIHandlerList = new ArrayList<AppDownloadManager.DownloadUIHandler>();
 		setDownloadTaskListener(this);
 	}
 	
@@ -38,18 +34,6 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadTa
 	
 	public AppStatusSaver getStatusSaver(){
 		return mStatusSaver;
-	}
-	
-	public void registUIHandler(DownloadUIHandler uiHandler){
-		mDownloadUIHandlerList.add(uiHandler);
-	}
-	
-	public void unregistUIHandler(DownloadUIHandler uiHandler){
-		mDownloadUIHandlerList.remove(uiHandler);
-	}
-	
-	public void clearRegistedUIHandler(){
-		mDownloadUIHandlerList.clear();
 	}
 	
 	public boolean addTask(SimpleApp app){
@@ -104,86 +88,24 @@ public class AppDownloadManager extends AbsDownloadManager implements DownloadTa
 	@Override
 	public void onComplete(long id) {
 		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.complete(id);
-		}
+		super.onComplete(id);
 		launchWaitTask();
-	}
-
-	@Override
-	public void onStart(long id, long total, long current) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.start(id, total, current);
-		}
 	}
 
 	@Override
 	public void onError(long id, int errorCode) {
 		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.error(id, errorCode);
-		}
+		super.onError(id, errorCode);
 		launchWaitTask();
 	}
 
 	@Override
 	public void onCancel(long id) {
 		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.cancel(id);
-		}
+		super.onCancel(id);
 		if (getTask(id).getStatus() != Task.STATE_WAIT){
 			// 如果不是暂停的等待Task
 			launchWaitTask();
-		}
-	}
-
-	@Override
-	public void onProgress(long id, long total, long current) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.progress(id, total, current);
-		}
-	}
-
-	@Override
-	public void onPrepare(long id) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.prepare(id);
-		}
-	}
-	
-	@Override
-	public void onAdd(long id) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.taskAdd(id);
-		}
-	}
-
-	@Override
-	public void onWait(long id) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.taskWait(id);
 		}
 	}
 

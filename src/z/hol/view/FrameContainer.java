@@ -53,7 +53,7 @@ public class FrameContainer extends FrameLayout{
 	}
 	
 	public void switchNext(){
-		int next = getCurrentChlidIndex();
+		int next = getCurrentChlidIndex() + 1;
 		if (next >= mCount) next = 0;
 		switchChild(next);
 	}

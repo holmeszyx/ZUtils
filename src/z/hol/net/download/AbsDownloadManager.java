@@ -1,12 +1,14 @@
 package z.hol.net.download;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
 import android.os.Handler;
 import android.os.Message;
 
@@ -16,7 +18,7 @@ import android.os.Message;
  * @author holmes
  *
  */
-public abstract class AbsDownloadManager {
+public abstract class AbsDownloadManager implements DownloadTaskListener{
 	private static final int DEFAULT_MAX_RUNNING = 2;
 	
 	/**
@@ -84,15 +86,30 @@ public abstract class AbsDownloadManager {
 	private AtomicInteger mRunningTask;
 	private int mMaxRunning = DEFAULT_MAX_RUNNING;
 	private DownloadTaskListener mDownloadTaskListener;
+	private List<DownloadUIHandler> mDownloadUIHandlerList;
 	
 	public AbsDownloadManager(){
 		mTaskMap = new HashMap<Long, AbsDownloadManager.Task>();
 		mWaitQueue = new ConcurrentLinkedQueue<AbsDownloadManager.Task>();
 		mRunningTask = new AtomicInteger(0);
+		mDownloadUIHandlerList = new ArrayList<DownloadUIHandler>();
+		setDownloadTaskListener(this);
 	}
 	
 	public void setDownloadTaskListener(DownloadTaskListener listener){
 		mDownloadTaskListener = listener;
+	}
+	
+	public void registUIHandler(DownloadUIHandler uiHandler){
+		mDownloadUIHandlerList.add(uiHandler);
+	}
+	
+	public void unregistUIHandler(DownloadUIHandler uiHandler){
+		mDownloadUIHandlerList.remove(uiHandler);
+	}
+	
+	public void clearRegistedUIHandler(){
+		mDownloadUIHandlerList.clear();
 	}
 	
 	/**
@@ -375,6 +392,86 @@ public abstract class AbsDownloadManager {
 		}
 	}
 	
+	@Override
+	public void onComplete(long id) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.complete(id);
+		}
+	}
+
+	@Override
+	public void onStart(long id, long total, long current) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.start(id, total, current);
+		}
+	}
+
+	@Override
+	public void onError(long id, int errorCode) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.error(id, errorCode);
+		}
+	}
+
+	@Override
+	public void onCancel(long id) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.cancel(id);
+		}
+	}
+
+	@Override
+	public void onProgress(long id, long total, long current) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.progress(id, total, current);
+		}
+	}
+
+	@Override
+	public void onPrepare(long id) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.prepare(id);
+		}
+	}
+	
+	@Override
+	public void onAdd(long id) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.taskAdd(id);
+		}
+	}
+
+	@Override
+	public void onWait(long id) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.taskWait(id);
+		}
+	}	
+	
 	/**
 	 * 下载管理器，回调事件
 	 * @author holmes
@@ -405,24 +502,6 @@ public abstract class AbsDownloadManager {
 			e.type = type;
 			return e;
 		}
-	}
-	
-	/**
-	 * 下载管理器任务状态回调
-	 */
-	public static interface DownloadTaskListener extends DownloadListener{
-		
-		/**
-		 * 任务添加
-		 * @param id
-		 */
-		public void onAdd(long id);
-		
-		/**
-		 * 任务等待
-		 * @param id
-		 */
-		public void onWait(long id);
 	}
 	
 	/**

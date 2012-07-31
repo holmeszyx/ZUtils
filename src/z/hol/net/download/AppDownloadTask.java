@@ -133,12 +133,12 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 			return;
 		}
 		mState = STATE_RUNNING;
-		prepareDownlader();
+		prepareDownloader();
 		mThread = new Thread(downloader);
 		mThread.start();
 	}
 	
-	private void prepareDownlader(){
+	private void prepareDownloader(){
 		downloader = new AppContinuinglyDownloader(mApp, getFileSavePath(), startPos, mStatusSaver, this);
 	}
 

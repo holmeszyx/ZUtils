@@ -102,6 +102,7 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	};
 	
 	private HttpClient httpClient;
+	private static HashMap<String, String> commonHeader = null;
 	private HashMap<String, String> mHeaders;
 	protected Context mContext;
 	private boolean gzipEnable = true;
@@ -159,14 +160,51 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	}
 	
 	/**
+	 * 添加通用头
+	 * @param name
+	 * @param value
+	 */
+	public static void addCommonHeader(String name, String value){
+		if (name == null || value == null){
+			return;
+		}
+		if (commonHeader == null){
+			commonHeader = new HashMap<String, String>();
+		}
+		commonHeader.put(name, value);
+	}
+	
+	/**
+	 * 清空通用头
+	 */
+	public static void clearCommonHeader(){
+		if (commonHeader != null){
+			commonHeader.clear();
+		}
+	}
+	
+	/**
 	 * 应用自己添加的一些头部
 	 * @param httpRequest
 	 */
 	private void insertAddedHeaders(HttpRequestBase httpRequest){
+		insertCommonHeaders(httpRequest);
 		if (mHeaders == null || mHeaders.isEmpty()){
 			return;
 		}
 		Set<Entry<String, String>> headers = mHeaders.entrySet();
+		Iterator<Entry<String, String>> iter = headers.iterator();
+		while(iter.hasNext()){
+			Entry<String, String> header = iter.next();
+			httpRequest.addHeader(header.getKey(), header.getValue());
+		}
+	}
+	
+	private static void insertCommonHeaders(HttpRequestBase httpRequest){
+		if (commonHeader == null || commonHeader.isEmpty()){
+			return;
+		}
+		Set<Entry<String, String>> headers = commonHeader.entrySet();
 		Iterator<Entry<String, String>> iter = headers.iterator();
 		while(iter.hasNext()){
 			Entry<String, String> header = iter.next();
