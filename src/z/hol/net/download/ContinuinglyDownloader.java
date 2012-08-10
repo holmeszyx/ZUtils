@@ -23,10 +23,12 @@ import z.hol.general.ConcurrentCanceler;
  *
  */
 public class ContinuinglyDownloader implements Runnable{
+	public static final String TEMP_FILE_EX_NAME = ".zdt";
 	public static final int ERROR_CODE_SDCARD_NO_FOUND = 10404;
 	public static final int MAX_REAPEAT_TIMES = 3;
 	public static final int MAX_TRY_AGAIN_TIMES = 5;
 	
+	private boolean useTempFile = true;
 	private boolean autoTryAgain = true;
 	private int mMaxTryAgainTimes = MAX_TRY_AGAIN_TIMES;
 	private int mAlreadyTryTimes = 0;
@@ -41,6 +43,7 @@ public class ContinuinglyDownloader implements Runnable{
 	private CountDownLatch mCountDownLatch;
 	private ConcurrentCanceler mCanceler;
 	private int mErrorTimes = 0;
+	private boolean mIsBlockComplete = false;
 	
 	public ContinuinglyDownloader(String url, long blockSize, long startPos, int threadIndex, String filePath){
 		this.url = url;
@@ -55,6 +58,10 @@ public class ContinuinglyDownloader implements Runnable{
 		this.startPos = startPos;
 		this.blockSize = blockSize;
 		maxRemain = this.blockSize * (mThreadIndex + 1) - startPos;
+	}
+	
+	public void useTempFile(boolean use){
+		useTempFile = use;
 	}
 	
 	public void setCountDown(CountDownLatch countDownLatch){
@@ -75,10 +82,21 @@ public class ContinuinglyDownloader implements Runnable{
 		if (!path.exists()){
 			path.mkdirs();
 		}
+		String realSaveFile = filePath;
+		if (useTempFile){
+			realSaveFile = realSaveFile + TEMP_FILE_EX_NAME;
+			File realFile = new File(realSaveFile);
+			if (!realFile.exists()){
+				if (saveFile.exists()){
+					saveFile.renameTo(realFile);
+				}
+			}
+			realFile = null;
+		}
 		path = null;
 		saveFile = null;
 		try {
-			file = new RandomAccessFile(filePath, "rw");
+			file = new RandomAccessFile(realSaveFile, "rw");
 			file.seek(startPos);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -171,7 +189,7 @@ public class ContinuinglyDownloader implements Runnable{
 			e.printStackTrace();
 		}
 		// System.out.println("start download");
-		
+		mIsBlockComplete = false;
 		onStart(startPos, maxRemain, blockSize);
 		doDownload();
 	}
@@ -202,7 +220,8 @@ public class ContinuinglyDownloader implements Runnable{
 				in = conn.getInputStream();
 				saveFile(in);
 				if (!isCanceled()){
-					onBlockComplete();
+					mIsBlockComplete = true;
+					// onBlockComplete();
 				}
 			}else{
 				System.out.println(mThreadIndex + " http status code is " + conn.getResponseCode());
@@ -240,6 +259,12 @@ public class ContinuinglyDownloader implements Runnable{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				if (mIsBlockComplete){
+					restoreTempFile();
+				}
+				if (!isCanceled() && mIsBlockComplete){
+					onBlockComplete();
+				}
 			}
 		}
 		
@@ -252,6 +277,24 @@ public class ContinuinglyDownloader implements Runnable{
 				e.printStackTrace();
 			}
 			doDownload();
+		}
+	}
+	
+	/**
+	 * 当下载完成后，恢复临时文件
+	 */
+	private void restoreTempFile(){
+		if (useTempFile){
+			File realSaveFile = new File(filePath + TEMP_FILE_EX_NAME);
+			File originFile = new File(filePath);
+			if (realSaveFile.exists()){
+				if (originFile.exists()){
+					originFile.delete();
+				}
+				realSaveFile.renameTo(originFile);
+			}
+			realSaveFile = null;
+			originFile = null;
 		}
 	}
 	
@@ -377,7 +420,7 @@ public class ContinuinglyDownloader implements Runnable{
 	 * 块下载完成
 	 */
 	protected void onBlockComplete(){
-		
+		mIsBlockComplete = true;
 	}
 
 	/**

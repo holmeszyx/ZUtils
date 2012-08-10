@@ -1,5 +1,7 @@
 package z.hol.utils;
 
+import java.io.File;
+
 public class FileUtils {
 
 	public static final long B = 1;
@@ -44,5 +46,11 @@ public class FileUtils {
 	
 	public static double getSize(long size, long u){
 		return (double) size / (double) u;
+	}
+	
+	public static boolean renameFile(String from, String to){
+		File ff = new File(from);
+		File ft = new File(to);
+		return ff.renameTo(ft);
 	}
 }

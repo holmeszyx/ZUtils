@@ -45,8 +45,10 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
+import org.json.JSONException;
 
 import z.hol.net.http.entity.GzipDecompressingEntity;
+import z.hol.net.http.entity.JsonEntity;
 import android.content.Context;
 
 public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
@@ -244,15 +246,23 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	public Response httpGet(String url) {
 		return httpGet(NetConst.UNKNOWN, url);
 	}
-
+	
 	@Override
-	public Response httpPost(int type, String url, List<NameValuePair> params) {
+	public Response httpPost(int type, String url, List<NameValuePair> params,
+			boolean json) {
+		// TODO Auto-generated method stub
 		Response data = null;
 		HttpPost post = new HttpPost(url);
 		try {
 			insertAddedHeaders(post);
 			if (params != null){
-				post.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+				HttpEntity entity = null;
+				if (json){
+					entity = new JsonEntity(params, HTTP.UTF_8);
+				}else{
+					entity = new UrlEncodedFormEntity(params, HTTP.UTF_8);
+				}
+				post.setEntity(entity);
 			}
 			HttpResponse response = httpClient.execute(post);
 			data = new Response(type, response);
@@ -263,10 +273,18 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
 		
 		return data;
+	}
+
+	@Override
+	public Response httpPost(int type, String url, List<NameValuePair> params) {
+		return httpPost(type, url, params, false);
 	}
 	
 	@Override
