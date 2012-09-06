@@ -358,6 +358,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 			task.cancel();
 			mTaskMap.remove(taskId);
 			onTaskRemove(taskId);
+			invokeDownloadRemove(taskId);
 			return true;
 		}
 		return false;
@@ -389,6 +390,12 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	private void invokeDownloadWait(long id){
 		if (mDownloadTaskListener != null){
 			mDownloadTaskListener.onWait(id);
+		}
+	}
+	
+	private void invokeDownloadRemove(long id){
+		if (mDownloadTaskListener != null){
+			mDownloadTaskListener.onRemove(id);
 		}
 	}
 	
@@ -470,7 +477,17 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.taskWait(id);
 		}
-	}	
+	}
+	
+	@Override
+	public void onRemove(long id) {
+		// TODO Auto-generated method stub
+		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
+		while(iter.hasNext()){
+			DownloadUIHandler uiHandler = iter.next();
+			uiHandler.taskRemove(id);
+		}
+	}
 	
 	/**
 	 * 下载管理器，回调事件
@@ -486,6 +503,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		public static final int TYPE_ADD = 6;
 		public static final int TYPE_WAIT = 7;
 		public static final int TYPE_PREPARE = 8;
+		public static final int TYPE_REMOVE = 9;
 		
 		public int type;
 		public long id;
@@ -544,6 +562,10 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 					break;
 				case Event.TYPE_PREPARE:
 					onPrepare(e.id);
+					break;
+				case Event.TYPE_REMOVE:
+					onRemove(e.id);
+					break;
 				}
 			}
 		}
@@ -630,6 +652,15 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 			
 			Event e = Event.obtain();
 			e.type = Event.TYPE_WAIT;
+			e.id = id;
+			obtainMessage(e.type, e).sendToTarget();
+		}
+		
+		void taskRemove(long id){
+			if (!filterId(id)) return;
+			
+			Event e = Event.obtain();
+			e.type = Event.TYPE_REMOVE;
 			e.id = id;
 			obtainMessage(e.type, e).sendToTarget();
 		}

@@ -78,10 +78,15 @@ public class MultiThreadDownload {
 	private void startThread(Runnable run){
 		new Thread(run).start();
 	}
-
+	
+	
 	public static long getUrlContentLength(String fileUrl) throws IOException{
+		return getUrlContentLength(fileUrl, null);
+	}
+
+	public static long getUrlContentLength(String fileUrl, OnRedirectListener listener) throws IOException{
 		long length = -1;
-		length = getUrlContentLength(fileUrl, false);
+		length = getUrlContentLength(fileUrl, false, listener);
 		return length;
 	}
 	
@@ -92,7 +97,7 @@ public class MultiThreadDownload {
 	 * @param fileUrl
 	 * @param methodHead 是否使用HEAD方法，否则为GET
 	 */
-	public static long getUrlContentLength(String fileUrl, boolean methodHead) throws IOException{
+	public static long getUrlContentLength(String fileUrl, boolean methodHead, OnRedirectListener listener) throws IOException{
 		long length = -1;
 		URL url = new URL(fileUrl);
 
@@ -117,6 +122,13 @@ public class MultiThreadDownload {
 		}else{
 			System.out.println("http status code is " + conn.getResponseCode());
 		}
+		String newUrl = conn.getURL().toString();
+		if (!newUrl.equals(url.toString())){
+			// 有重定向
+			if (listener != null){
+				listener.onRedirect(url.toString(), newUrl);
+			}
+		}
 		conn.disconnect();
 		return length;
 	}
@@ -139,4 +151,18 @@ public class MultiThreadDownload {
 		}
 	}
 	
+	/**
+	 * 跳转监听
+	 * @author holmes
+	 *
+	 */
+	public static interface OnRedirectListener{
+		
+		/**
+		 * 跳转
+		 * @param originUrl 原始Url
+		 * @param newUrl	跳转后的新Url
+		 */
+		public void onRedirect(String originUrl, String newUrl);
+	}
 }

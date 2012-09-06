@@ -42,6 +42,14 @@ public interface AppStatusSaver extends DatabaseHandler{
 	 public void addAppDownload(SimpleApp app, String saveFile);
 	 
 	 /**
+	  * 修改下载Url<br>
+	  * 一般只有重定向时才用修改
+	  * @param appId
+	  * @param url
+	  */
+	 public void changUrl(long appId, String url);
+	 
+	 /**
 	  * 更新APP的大小 
 	  * @param appId
 	  * @param size

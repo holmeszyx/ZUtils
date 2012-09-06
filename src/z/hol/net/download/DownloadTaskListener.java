@@ -18,4 +18,10 @@ public interface DownloadTaskListener extends DownloadListener{
 	 * @param id
 	 */
 	public void onWait(long id);
+	
+	/**
+	 * 任务被移除
+	 * @param id
+	 */
+	public void onRemove(long id);
 }

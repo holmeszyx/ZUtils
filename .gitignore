@@ -1,5 +1,6 @@
 # editors temp file
 *~
+*.log
 
 # built application files
 *.apk

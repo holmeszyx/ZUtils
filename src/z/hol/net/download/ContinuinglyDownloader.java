@@ -13,6 +13,7 @@ import java.util.concurrent.CountDownLatch;
 
 import z.hol.general.CC;
 import z.hol.general.ConcurrentCanceler;
+import z.hol.net.download.MultiThreadDownload.OnRedirectListener;
 
 
 /**
@@ -22,7 +23,7 @@ import z.hol.general.ConcurrentCanceler;
  * @author holmes
  *
  */
-public class ContinuinglyDownloader implements Runnable{
+public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	public static final String TEMP_FILE_EX_NAME = ".zdt";
 	public static final int ERROR_CODE_SDCARD_NO_FOUND = 10404;
 	public static final int MAX_REAPEAT_TIMES = 3;
@@ -113,7 +114,7 @@ public class ContinuinglyDownloader implements Runnable{
 	private boolean prepareFileSize(){
 		if (startPos <= 0){
 			try {
-				blockSize = MultiThreadDownload.getUrlContentLength(url);
+				blockSize = MultiThreadDownload.getUrlContentLength(url, this);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -128,6 +129,13 @@ public class ContinuinglyDownloader implements Runnable{
 			}
 		}
 		return true;
+	}
+	
+	@Override
+	public void onRedirect(String originUrl, String newUrl) {
+		// TODO Auto-generated method stub
+		System.out.println("redi");
+		url = newUrl;
 	}
 	
 	/**

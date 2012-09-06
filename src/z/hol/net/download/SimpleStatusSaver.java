@@ -77,6 +77,14 @@ public class SimpleStatusSaver implements AppStatusSaver{
 	}
 
 	@Override
+	public void changUrl(long appId, String url) {
+		// TODO Auto-generated method stub
+		 ContentValues values = new ContentValues();
+		 values.put(APP.URL, url);
+		 db.update(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, values, APP._ID+ "=" + appId, null);
+	}
+
+	@Override
 	public AppDownloadTask getAppTask(long appId, AppDownloadTask task) {
 		// TODO Auto-generated method stub
 		 Cursor c = db.query(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, APP_TASK_PROJECTION, APP._ID + "=" + appId, null, null, null, null);

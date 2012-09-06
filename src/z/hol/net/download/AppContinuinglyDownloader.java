@@ -36,6 +36,13 @@ public class AppContinuinglyDownloader extends ContinuinglyDownloader{
 	}
 	
 	@Override
+	public void onRedirect(String originUrl, String newUrl) {
+		// TODO Auto-generated method stub
+		super.onRedirect(originUrl, newUrl);
+		mStatusSaver.changUrl(getDownloadId(), newUrl);
+	}
+
+	@Override
 	protected boolean isAleadyComplete(long startPos, long remain,
 			long blockSize) {
 		// TODO Auto-generated method stub
