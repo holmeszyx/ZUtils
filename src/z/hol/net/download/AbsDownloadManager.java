@@ -84,6 +84,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	private HashMap<Long, Task> mTaskMap;
 	private ConcurrentLinkedQueue<Task> mWaitQueue;
 	private AtomicInteger mRunningTask;
+	private AtomicInteger mCompletedTask;
 	private int mMaxRunning = DEFAULT_MAX_RUNNING;
 	private DownloadTaskListener mDownloadTaskListener;
 	private List<DownloadUIHandler> mDownloadUIHandlerList;
@@ -92,6 +93,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		mTaskMap = new HashMap<Long, AbsDownloadManager.Task>();
 		mWaitQueue = new ConcurrentLinkedQueue<AbsDownloadManager.Task>();
 		mRunningTask = new AtomicInteger(0);
+		mCompletedTask = new AtomicInteger(0);
 		mDownloadUIHandlerList = new ArrayList<DownloadUIHandler>();
 		setDownloadTaskListener(this);
 	}
@@ -150,6 +152,9 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	 */
 	public boolean addTask(Task task, boolean autoStart){
 		if (!hasTask(task)){
+			if (task.getStatus() == Task.STATE_COMPLETE){
+				taskCompleted();
+			}
 			mTaskMap.put(task.getTaskId(), task);
 			invokeDownloadAdd(task.getTaskId());
 			if (autoStart){
@@ -244,11 +249,46 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	}
 	
 	/**
+	 * 一个任务完成
+	 */
+	protected void taskCompleted(){
+		mCompletedTask.incrementAndGet();
+	}
+	
+	/**
+	 * 一个完成的任务被移除
+	 */
+	protected void completedTaskRemoved(){
+		mCompletedTask.decrementAndGet();
+	}
+	
+	/**
 	 * 获取运行已任务的数量
 	 * @return
 	 */
 	public int getRunningTaskCount(){
 		return mRunningTask.get();
+	}
+	
+	/**
+	 * 获取等待任务的数量
+	 * @return
+	 */
+	public int getWaitingTaskCount(){
+		return mWaitQueue.size();
+	}
+	
+	public int getCompletedTaskCount(){
+		return mCompletedTask.get();
+	}
+	
+	/**
+	 * 获取任务的总数量<br>
+	 * <b>任何状态的任务</b>
+	 * @return
+	 */
+	public int getTaskCount(){
+		return mTaskMap.size();
 	}
 	
 	/**
@@ -357,6 +397,9 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		if (task != null){
 			task.cancel();
 			mTaskMap.remove(taskId);
+			if (task.getStatus() == Task.STATE_COMPLETE){
+				completedTaskRemoved();
+			}
 			onTaskRemove(taskId);
 			invokeDownloadRemove(taskId);
 			return true;
@@ -381,6 +424,20 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		return mTaskMap.get(taskId);
 	}
 	
+	/**
+	 * 获取的Task的列表
+	 * @return tasks的列表,如果没有task则返回null
+	 */
+	public List<Task> getTasks(){
+		int count = getTaskCount();
+		if (count == 0) return null;
+		
+		int size = count < 16 ? 16 : count;
+		List<Task> tasks = new ArrayList<AbsDownloadManager.Task>(size);
+		tasks.addAll(mTaskMap.values());
+		return tasks;
+	}
+	
 	private void invokeDownloadAdd(long id){
 		if (mDownloadTaskListener != null){
 			mDownloadTaskListener.onAdd(id);
@@ -402,6 +459,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	@Override
 	public void onComplete(long id) {
 		// TODO Auto-generated method stub
+		taskCompleted();
 		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
 		while(iter.hasNext()){
 			DownloadUIHandler uiHandler = iter.next();
