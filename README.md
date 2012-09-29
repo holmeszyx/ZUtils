@@ -1,6 +1,6 @@
 ZUtils
 ======
-Version 0.2.2
+Version 0.2.3
 
 Some android utils
 
@@ -24,6 +24,11 @@ Android Permission required
 
 Log
 ---
+
+#### v0.2.3
+* Transplant a powerful image downloader from bitmapfun of google,
+  Use it by ImageDownloaderEx which like the old ImageDownload 
+
 #### v0.2.2
 * Optimizes the download manager.(SQLite)
 * Can limit the numbers of download task in the same time.
