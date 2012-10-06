@@ -215,6 +215,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 			}
 			if (isAleadyComplete(startPos, maxRemain, blockSize)){
 				restoreTryTimes();
+				mIsBlockComplete = true;
 				return;
 			}
 			if (file == null){

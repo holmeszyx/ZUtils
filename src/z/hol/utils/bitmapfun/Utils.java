@@ -16,6 +16,8 @@
 
 package z.hol.utils.bitmapfun;
 
+import java.io.File;
+
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
@@ -23,9 +25,6 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
-import android.util.Log;
-
-import java.io.File;
 
 /**
  * Class containing some static utility methods.

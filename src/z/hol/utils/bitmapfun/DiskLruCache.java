@@ -291,7 +291,10 @@ public class DiskLruCache {
      * @return
      */
     public static String createFilePath(File cacheDir, String key) {
-
+    	if (!cacheDir.exists()){
+    		cacheDir.mkdirs();
+    	}
+    	
         return cacheDir.getAbsolutePath() + File.separator +
                 CACHE_FILENAME_PREFIX + encodeKey(key);
     }
