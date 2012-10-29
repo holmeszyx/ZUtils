@@ -10,7 +10,7 @@ public class ThreadUtils {
 	 * @param task
 	 */
 	public static void cancelAsyncTask(@SuppressWarnings("rawtypes") AsyncTask task){
-		if (task != null && task.getStatus() == Status.RUNNING){
+		if (task != null && task.getStatus() != Status.FINISHED){
 			task.cancel(true);
 		}
 	}

@@ -71,7 +71,7 @@ public class Response {
 	}
 	
 	public String getUtf8ContentString(){
-		if (strContent == null){
+		if (strContent == null && rawContent != null){
 			try {
 				strContent = new String(rawContent, "UTF-8");
 			} catch (UnsupportedEncodingException e) {

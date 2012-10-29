@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package z.hol.utils.bitmapfun;
+package z.hol.utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

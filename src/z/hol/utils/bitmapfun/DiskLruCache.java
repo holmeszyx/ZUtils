@@ -274,10 +274,13 @@ public class DiskLruCache {
     		Log.d(TAG, "internal");
     	}
     	*/
+    	File externalDir = null;
         final String cachePath =
                 Environment.getExternalStorageState().intern() == Environment.MEDIA_MOUNTED.intern() ||
-                        !Utils.isExternalStorageRemovable() ?
-                        Utils.getExternalCacheDir(context).getPath() :
+                        !Utils.isExternalStorageRemovable() ? (
+                        (externalDir = Utils.getExternalCacheDir(context)) != null ? 
+                        externalDir.getPath() : context.getCacheDir().getPath() 
+                        ) :
                         context.getCacheDir().getPath();
 
         return new File(cachePath + File.separator + uniqueName);

@@ -19,6 +19,7 @@ package z.hol.utils.bitmapfun;
 import java.io.File;
 
 import z.hol.utils.BuildConfig;
+import z.hol.utils.LruCache;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;

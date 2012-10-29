@@ -326,14 +326,17 @@ public abstract class ImageWorker {
     private void setImageBitmap(ImageView imageView, Bitmap bitmap) {
         if (mFadeInBitmap) {
             // Transition drawable with a transparent drwabale and the final bitmap
+        	Drawable backDrawable = mLoadingBitmap == null ?  new ColorDrawable(android.R.color.transparent) : 
+        		new BitmapDrawable(mContext.getResources(), mLoadingBitmap);
             final TransitionDrawable td =
                     new TransitionDrawable(new Drawable[] {
-                            new ColorDrawable(android.R.color.transparent),
+                    		backDrawable,
                             new BitmapDrawable(mContext.getResources(), bitmap)
                     });
+            td.setCrossFadeEnabled(true);
             // Set background to loading bitmap
-            imageView.setBackgroundDrawable(
-                    new BitmapDrawable(mContext.getResources(), mLoadingBitmap));
+            //imageView.setBackgroundDrawable(
+            //        new BitmapDrawable(mContext.getResources(), mLoadingBitmap));
 
             imageView.setImageDrawable(td);
             td.startTransition(FADE_IN_TIME);
