@@ -395,7 +395,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	public boolean removeTask(long taskId){
 		Task task = getTask(taskId);
 		if (task != null){
-			task.cancel();
+			cancelTask(task);
 			mTaskMap.remove(taskId);
 			if (task.getStatus() == Task.STATE_COMPLETE){
 				completedTaskRemoved();

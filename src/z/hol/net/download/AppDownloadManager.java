@@ -102,7 +102,8 @@ public class AppDownloadManager extends AbsDownloadManager{
 	public void onCancel(long id) {
 		// TODO Auto-generated method stub
 		super.onCancel(id);
-		if (getTask(id).getStatus() != Task.STATE_WAIT){
+		Task task = getTask(id);
+		if (task != null && task.getStatus() != Task.STATE_WAIT){
 			// 如果不是暂停的等待Task
 			launchWaitTask();
 		}

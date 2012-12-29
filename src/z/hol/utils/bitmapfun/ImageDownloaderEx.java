@@ -4,6 +4,8 @@ import java.util.HashMap;
 
 import z.hol.utils.bitmapfun.ImageCache.ImageCacheParams;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 import android.widget.ImageView;
 
 /**
@@ -22,6 +24,7 @@ public class ImageDownloaderEx {
 		mImageWorker = new ImageFetcher(context, size.width, size.height);
 		ImageCacheParams cacheParams = new ImageCacheParams(size.forDetail ? NAME_DETAIL : NAME_ICON);
 		cacheParams.memCacheSize = MEM_CACHE_SIZE;
+		cacheParams.compressFormat = CompressFormat.PNG;
 		mImageWorker.setImageCache(ImageCache.findOrCreateCache(context, cacheParams));
 		mImageWorker.setImageSize(size.width, size.height);
 	}
@@ -42,6 +45,10 @@ public class ImageDownloaderEx {
 	
 	public void download(String url, ImageView img, SizeInfo size){
 		download(url, img, size.width, size.height);
+	}
+	
+	public Bitmap getImageFromCache(String url){
+		return mImageWorker.getImageFromCache(url);
 	}
 	
 	/**

@@ -24,6 +24,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
 /**
@@ -191,11 +192,15 @@ public class ImageCache {
      * @param data Unique identifier for which item to get
      * @return The bitmap if found in cache, null otherwise
      */
-    public Bitmap getBitmapFromDiskCache(String data) {
+    public Bitmap getBitmapFromDiskCache(String data, BitmapFactory.Options options) {
         if (mDiskCache != null) {
-            return mDiskCache.get(data);
+            return mDiskCache.get(data, options);
         }
         return null;
+    }
+    
+    public Bitmap getBitmapFromDiskCache(String data) {
+    	return getBitmapFromDiskCache(data, null);
     }
 
     public void clearCaches() {

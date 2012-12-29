@@ -96,7 +96,27 @@ public class ImageResizer extends ImageWorker {
         return processBitmap(Integer.parseInt(String.valueOf(data)));
     }
 
-    /**
+    @Override
+	protected Bitmap getImageFromDiskCache(String data) {
+		// TODO Auto-generated method stub
+		//return super.getImageFromDiskCache(data);
+    	ImageCache cache = getImageCache();
+    	if (cache != null){
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            cache.getBitmapFromDiskCache(data, options);
+
+            // Calculate inSampleSize
+            options.inSampleSize = calculateInSampleSize(options, mImageWidth, mImageHeight);
+
+            // Decode bitmap with inSampleSize set
+            options.inJustDecodeBounds = false;
+            return cache.getBitmapFromDiskCache(data, options);
+    	}
+    	return null;
+	}
+
+	/**
      * Decode and sample down a bitmap from resources to the requested width and height.
      *
      * @param res The resources object containing the image data

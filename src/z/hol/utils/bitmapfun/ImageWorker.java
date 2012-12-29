@@ -82,6 +82,30 @@ public abstract class ImageWorker {
             task.execute(data);
         }
     }
+    
+    public Bitmap getImageFromCache(String data){
+    	if (mImageCache != null){
+            Bitmap bitmap = mImageCache.getBitmapFromMemCache(data);
+            if (bitmap == null){
+            	bitmap = mImageCache.getBitmapFromDiskCache(data);
+            }
+            return bitmap;
+    	}
+    	return null;
+    }
+    
+    /**
+     * 从存储卡上拿缓存的图片<br>
+     * 注： 图片可能很大
+     * @param data
+     * @return
+     */
+    protected Bitmap getImageFromDiskCache(String data){
+    	if (mImageCache != null){
+    		return mImageCache.getBitmapFromDiskCache(data);
+    	}
+    	return null;
+    }
 
     /**
      * Load an image specified from a set adapter into an ImageView (override
@@ -241,7 +265,8 @@ public abstract class ImageWorker {
             // the cache
             if (mImageCache != null && !isCancelled() && getAttachedImageView() != null
                     && !mExitTasksEarly) {
-                bitmap = mImageCache.getBitmapFromDiskCache(dataString);
+               // bitmap = mImageCache.getBitmapFromDiskCache(dataString);
+                bitmap = getImageFromDiskCache(dataString);
             }
 
             // If the bitmap was not found in the cache and this task has not been cancelled by
