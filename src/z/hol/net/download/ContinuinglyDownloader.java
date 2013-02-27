@@ -225,7 +225,11 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 			URL httpUrl = new URL(url);
 			HttpURLConnection conn = (HttpURLConnection) httpUrl.openConnection();
 			fillHttpHeader(conn);
-			if (conn.getResponseCode() == 206){
+			int responseCode = conn.getResponseCode();
+			if (responseCode == 206 || responseCode == 200){
+				// 不支持断点续传
+				if (responseCode == 200) autoTryAgain = false;
+				
 				in = conn.getInputStream();
 				saveFile(in);
 				if (!isCanceled()){
@@ -233,7 +237,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 					// onBlockComplete();
 				}
 			}else{
-				System.out.println(mThreadIndex + " http status code is " + conn.getResponseCode());
+				System.out.println(mThreadIndex + " http status code is " + responseCode);
 				restoreTryTimes();
 				onDownloadError(conn.getResponseCode());
 			}
