@@ -228,7 +228,10 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 			int responseCode = conn.getResponseCode();
 			if (responseCode == 206 || responseCode == 200){
 				// 不支持断点续传
-				if (responseCode == 200) autoTryAgain = false;
+				if (responseCode == 200){
+					autoTryAgain = false;
+					onDoNotSupportBreakpoint();
+				}
 				
 				in = conn.getInputStream();
 				saveFile(in);
@@ -426,6 +429,20 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		System.out.println(mThreadIndex + " is end");
 		if (mCountDownLatch != null){
 			mCountDownLatch.countDown();
+		}
+	}
+	
+	/**
+	 * 不支持断电续传
+	 */
+	protected void onDoNotSupportBreakpoint(){
+		initParams(blockSize, 0);
+		try {
+			file.setLength(maxRemain);
+			file.seek(0);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
