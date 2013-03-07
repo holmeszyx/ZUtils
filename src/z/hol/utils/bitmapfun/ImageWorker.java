@@ -19,6 +19,7 @@ package z.hol.utils.bitmapfun;
 import java.lang.ref.WeakReference;
 
 import z.hol.utils.BuildConfig;
+import z.hol.utils.IndependentAsyncTask;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -242,7 +243,7 @@ public abstract class ImageWorker {
     /**
      * The actual AsyncTask that will asynchronously process the image.
      */
-    private class BitmapWorkerTask extends AsyncTask<Object, Void, Bitmap> {
+    private class BitmapWorkerTask extends IndependentAsyncTask<Object, Void, Bitmap> {
         private Object data;
         private final WeakReference<ImageView> imageViewReference;
 
