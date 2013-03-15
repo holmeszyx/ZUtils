@@ -16,7 +16,6 @@
 
 package z.hol.utils;
 
-import java.util.ArrayDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -31,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import z.hol.utils.compat.ArrayDequeCompat;
 import android.os.AsyncTask.Status;
 import android.os.Handler;
 import android.os.Message;
@@ -202,7 +202,7 @@ public abstract class IndependentAsyncTask<Params, Progress, Result> {
     private final AtomicBoolean mTaskInvoked = new AtomicBoolean();
 
     private static class SerialExecutor implements Executor {
-        final ArrayDeque<Runnable> mTasks = new ArrayDeque<Runnable>();
+        final ArrayDequeCompat<Runnable> mTasks = new ArrayDequeCompat<Runnable>();
         Runnable mActive;
 
         public synchronized void execute(final Runnable r) {

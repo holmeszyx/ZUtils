@@ -315,11 +315,15 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	}
 	
 	/**
-	 * 是否要重连
+	 * 是否要重连，必须在至少一次 {@link #invokeTryAgainError(int)}之后执行。
 	 * @return
 	 */
 	private boolean isNeedTryAgain(){
-		return (mAlreadyTryTimes > 0) ? true : false;
+		// return (mAlreadyTryTimes > 0) ? true : false;
+		// 在 invokeTryAgainError 之后， mAlreadyTryTimes 会自增 1
+		// 所以 mAlreadyTryTimes 必大于 0
+		// 但为了防止无限重试，又加上小于最大连续尝试次数
+		return (mAlreadyTryTimes > 0 && mAlreadyTryTimes <= mMaxTryAgainTimes);
 	}
 	
 	/**
@@ -418,7 +422,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		conn.setRequestProperty("Range", "bytes=" + startPos + "-");
 		conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.168 Safari/535.19");
 		conn.setRequestProperty("Connection", "Keep-Alive");
-		//conn.setConnectTimeout(30000);
+		conn.setConnectTimeout(40000);
 		conn.setReadTimeout(30000);
 	}
 

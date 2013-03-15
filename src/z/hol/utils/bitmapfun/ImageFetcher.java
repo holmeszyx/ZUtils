@@ -65,7 +65,7 @@ public class ImageFetcher extends ImageResizer {
     }
 
     private void init(Context context) {
-        checkConnection(context);
+        //checkConnection(context);
     }
 
     /**
@@ -73,7 +73,8 @@ public class ImageFetcher extends ImageResizer {
      *
      * @param context
      */
-    private void checkConnection(Context context) {
+    @SuppressWarnings("unused")
+	private void checkConnection(Context context) {
         final ConnectivityManager cm =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         final NetworkInfo networkInfo = cm.getActiveNetworkInfo();

@@ -3,6 +3,7 @@ package z.hol.net.download;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -94,7 +95,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		mWaitQueue = new ConcurrentLinkedQueue<AbsDownloadManager.Task>();
 		mRunningTask = new AtomicInteger(0);
 		mCompletedTask = new AtomicInteger(0);
-		mDownloadUIHandlerList = new ArrayList<DownloadUIHandler>();
+		mDownloadUIHandlerList = new LinkedList<DownloadUIHandler>();
 		setDownloadTaskListener(this);
 	}
 	
@@ -244,6 +245,10 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	 * 正在运行的任务数减一
 	 */
 	protected void taskStoped(){
+		if (getRunningTaskCount() == 0){
+			System.out.println("runing-: empty");
+			return;
+		}
 		mRunningTask.decrementAndGet();
 		System.out.println("runing-: " + getRunningTaskCount());
 	}
