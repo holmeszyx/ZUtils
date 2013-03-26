@@ -1,9 +1,10 @@
-package z.hol.net.download;
+package z.hol.net.download.app;
 
 import java.util.List;
 
 import z.hol.model.SimpleApp;
 import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
+import z.hol.net.download.DatabaseHandler;
 
 /**
  * APP下载状态, 保存器

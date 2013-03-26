@@ -1,6 +1,6 @@
 package z.hol.net.download.utils;
 
-import z.hol.net.download.AppStatusSaver.APP;
+import z.hol.net.download.app.AppStatusSaver.APP;
 
 public class AppDownloadUtils {
 	public static String APP_SAVE_PATH = APP.DEFAULT_SAVE_PATH;

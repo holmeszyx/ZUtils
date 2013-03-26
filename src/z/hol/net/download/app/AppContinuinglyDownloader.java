@@ -1,7 +1,8 @@
-package z.hol.net.download;
+package z.hol.net.download.app;
 
 import z.hol.model.SimpleApp;
 import z.hol.net.download.AbsDownloadManager.Task;
+import z.hol.net.download.ContinuinglyDownloader;
 
 public class AppContinuinglyDownloader extends ContinuinglyDownloader{
 	

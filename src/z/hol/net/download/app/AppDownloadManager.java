@@ -1,8 +1,9 @@
-package z.hol.net.download;
+package z.hol.net.download.app;
 
 import java.util.List;
 
 import z.hol.model.SimpleApp;
+import z.hol.net.download.AbsDownloadManager;
 import z.hol.net.download.utils.AppDownloadUtils;
 import android.content.Context;
 

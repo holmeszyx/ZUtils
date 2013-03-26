@@ -1,7 +1,8 @@
-package z.hol.net.download;
+package z.hol.net.download.app;
 
 
 import z.hol.model.SimpleApp;
+import z.hol.net.download.AbsDownloadManager;
 import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
 import z.hol.net.download.task.AppTask;
 

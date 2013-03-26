@@ -1,4 +1,4 @@
-package z.hol.net.download;
+package z.hol.net.download.app;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.List;
 import z.hol.model.SimpleApp;
 import z.hol.net.download.AbsDownloadManager.Task;
 import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
+import z.hol.net.download.SimpleStateSaverDatabaseHelper;
 import z.hol.net.download.utils.AppDownloadUtils;
 import android.content.ContentValues;
 import android.content.Context;
