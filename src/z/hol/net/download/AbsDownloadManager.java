@@ -430,6 +430,38 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	}
 	
 	/**
+	 * 获取task的状态
+	 * @param taskId
+	 * @return
+	 */
+	public int getTaskState(long taskId){
+		Task task = getTask(taskId);
+		if (task == null){
+			return Task.STATE_INVALID;
+		}
+		return task.getStatus();
+	}
+	
+	/**
+	 * task是否是激活的, 即状态为
+	 * {@link Task#STATE_RUNNING}, {@link Task#STATE_PERPARE}, 
+	 * {@link Task#STATE_WAIT}, {@link Task#STATE_COMPLETE}。
+	 * 注意思，包括完成状态
+	 * @param taskId
+	 * @return
+	 */
+	public boolean isTaskActive(long taskId){
+		int status = getTaskState(taskId);
+		if (status == Task.STATE_RUNNING ||
+				status == Task.STATE_PERPARE ||
+				status == Task.STATE_WAIT ||
+				status == Task.STATE_COMPLETE){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
 	 * 获取的Task的列表
 	 * @return tasks的列表,如果没有task则返回null
 	 */

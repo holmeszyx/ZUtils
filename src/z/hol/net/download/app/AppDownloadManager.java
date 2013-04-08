@@ -45,14 +45,6 @@ public class AppDownloadManager extends AbsDownloadManager{
 		return super.addTask(task);
 	}
 	
-	public int getTaskState(long taskId){
-		Task task = getTask(taskId);
-		if (task == null){
-			return Task.STATE_INVALID;
-		}
-		return task.getStatus();
-	}
-	
 	/**
 	 * 恢复应用下载任务
 	 */

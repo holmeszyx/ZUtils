@@ -36,7 +36,7 @@ public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
 			 		"name TEXT, _int1 INTEGER, _int2 INTEGER," +
 			 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT" +
 			 		")"
-			 		);
+				 );
 	}
 
 	@Override
