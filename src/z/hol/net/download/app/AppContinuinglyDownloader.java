@@ -121,6 +121,4 @@ public class AppContinuinglyDownloader extends ContinuinglyDownloader{
 		}
 	}
 
-	
-
 }

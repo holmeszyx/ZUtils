@@ -22,7 +22,7 @@ public class AppDownloadManager extends AbsDownloadManager{
 	
 	public static AppDownloadManager getInstance(Context context){
 		if (downloadManager == null){
-			downloadManager = new AppDownloadManager(context);
+			downloadManager = new AppDownloadManager(context.getApplicationContext());
 			downloadManager.resotreAppTasks();
 		}
 		return downloadManager;

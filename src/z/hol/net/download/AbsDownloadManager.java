@@ -24,7 +24,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	
 	/**
 	 * 任务<br>
-	 * {@link Task#STATE_WAIT} --> {@link Task#STATE_PERPARE} --> {@link Task#STATE_RUNNING}<br>
+	 * {@link Task#STATE_WAIT} --> {@link Task#STATE_PERPARE} --> {@link Task#STATE_RUNNING}
 	 * --> {@link Task#STATE_PAUSE} --> {@link Task#STATE_COMPLETE}
 	 * @author holmes
 	 *
@@ -44,7 +44,8 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		public void waitForStart();
 		
 		/**
-		 * 结束等等，可以开始运行
+		 * 结束等等，可以开始运行<br>
+		 * 一般只需要改变task的等待状态
 		 */
 		public void notifyStart();
 		
@@ -62,6 +63,20 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		 * 继续
 		 */
 		public void goon();
+		
+		/**
+		 * 重新下载<br>
+		 * task要重置一些状态
+		 */
+		public void redownload();
+		
+		/**
+		 * 是否需要重新下载<br>
+		 * 一般在检测到中断状态时使用。
+		 * 中断状态有 Cancel, Error, Complete
+		 * @return
+		 */
+		public boolean isNeedRedownload();
 		
 		/**
 		 * 获取下载状态
@@ -142,6 +157,9 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	 * @return
 	 */
 	public static int computePercent(long total, long current){
+		if (total <= 0){
+			return 0;
+		}
 		return (int) (current * 100 / total);
 	}
 	
@@ -153,7 +171,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	 */
 	public boolean addTask(Task task, boolean autoStart){
 		if (!hasTask(task)){
-			if (task.getStatus() == Task.STATE_COMPLETE){
+			if (task.getStatus() == Task.STATE_COMPLETE && !task.isNeedRedownload()){
 				taskCompleted();
 			}
 			mTaskMap.put(task.getTaskId(), task);
@@ -228,6 +246,50 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * 重新下载
+	 * @param taskId
+	 */
+	public void redownload(long taskId){
+		Task task = getTask(taskId);
+		redownload(task);
+	}
+	
+	/**
+	 * 重新下载
+	 * @param task
+	 */
+	private void redownload(Task task){
+		if (task != null){
+			cancelTask(task);
+			int status = task.getStatus();
+			task.redownload();
+			if (status == Task.STATE_COMPLETE || status == Task.STATE_PAUSE){
+				// 可以直接启动
+				if (status == Task.STATE_COMPLETE){
+					// 因为需要改task的状态统计数
+					//removeTask(task.getTaskId());
+					//addTask(task, false);
+					completedTaskRemoved();
+				}
+				startTask(task);
+			}
+		}
+	}
+	
+	private boolean isTaskNeedRedownload(long taskId){
+		Task task = getTask(taskId);
+		if (task != null){
+			return task.isNeedRedownload();
+		}
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private void internalRedownload(Task task){
+		startTask(task);
 	}
 	
 	/**
@@ -502,6 +564,10 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.complete(id);
 		}
+		if (isTaskNeedRedownload(id)){
+			completedTaskRemoved();
+			startTask(id);
+		}
 	}
 
 	@Override
@@ -522,6 +588,9 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.error(id, errorCode);
 		}
+		if (isTaskNeedRedownload(id)){
+			startTask(id);
+		}
 	}
 
 	@Override
@@ -531,6 +600,9 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		while(iter.hasNext()){
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.cancel(id);
+		}
+		if (isTaskNeedRedownload(id)){
+			startTask(id);
 		}
 	}
 

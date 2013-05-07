@@ -8,23 +8,26 @@ import z.hol.net.download.task.AppTask;
 
 public class AppDownloadTask implements AppTask, DownloadListener{
 	
-	private AppContinuinglyDownloader downloader;
+	private AppContinuinglyDownloader mDownloader;
 	private SimpleApp mApp;
 	private Thread mThread;
 	private int mState = STATE_INVALID;
 	private DownloadListener mListener;
 	private AppStatusSaver mStatusSaver;
-	private long startPos = 0l;
-	private long total = 0l;
+	
+	private long mStartPos = 0l;
+	private long mTotal = 0l;
 	private String mSavePath = null;
-	private boolean isWait = false;
+	private boolean mIsWait = false;
+	
+	private boolean mIsNeedRedownload = false;
 	
 	public AppDownloadTask(SimpleApp app, String savePath, long startPos, AppStatusSaver saver, DownloadListener listener){
 		mApp = app;
 		mStatusSaver = saver;
 		mListener = listener;
 		mSavePath = savePath;
-		this.startPos = startPos;
+		this.mStartPos = startPos;
 	}
 	
 	public SimpleApp getApp(){
@@ -33,17 +36,17 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 	
 	@Override
 	public void setStartPos(long startPos){
-		this.startPos = startPos;
+		this.mStartPos = startPos;
 	}
 	
 	public void setTotal(long total){
-		this.total = total;
+		this.mTotal = total;
 	}
 	
 	@Override
 	public int getStatus() {
 		// TODO Auto-generated method stub
-		if (isWait){
+		if (mIsWait){
 			return STATE_WAIT;
 		}
 		return mState;
@@ -74,13 +77,13 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 	@Override
 	public long getCurrentPos() {
 		// TODO Auto-generated method stub
-		return startPos;
+		return mStartPos;
 	}
 
 	@Override
 	public long getTotal() {
 		// TODO Auto-generated method stub
-		return total;
+		return mTotal;
 	}
 
 	@Override
@@ -92,13 +95,13 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 	@Override
 	public void waitForStart() {
 		// TODO Auto-generated method stub
-		isWait = true;
+		mIsWait = true;
 	}
 
 	@Override
 	public void notifyStart() {
 		// TODO Auto-generated method stub
-		isWait = false;
+		mIsWait = false;
 	}
 
 	@Override
@@ -117,37 +120,73 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 	}
 	
 	@Override
+	public void redownload() {
+		// TODO Auto-generated method stub
+		mIsNeedRedownload = true;
+		cancel();
+		//restore();
+		
+		// 改为到下载管理器中去控制
+		//if (mState == STATE_PAUSE || mState == STATE_COMPLETE){
+		//	// 已经是非运行状态
+		//	startPos = 0l;
+		//	doStart();
+		// }else{
+		// }
+	}
+	
+	/**
+	 * 重置下载的状态, 在非运行状态才有效
+	 */
+	@SuppressWarnings("unused")
+	private void restore(){
+		if (mState == STATE_PAUSE || mState == STATE_COMPLETE){
+			mStartPos = 0;
+		}
+	}
+
+	@Override
+	public boolean isNeedRedownload() {
+		// TODO Auto-generated method stub
+		return mIsNeedRedownload;
+	}
+
+	@Override
 	public int getPercent() {
 		// TODO Auto-generated method stub
-		if (downloader == null){
-			if (total > 0){
-				return AbsDownloadManager.computePercent(total, startPos);
+		if (mDownloader == null){
+			if (mTotal > 0){
+				return AbsDownloadManager.computePercent(mTotal, mStartPos);
 			}
 			return 0;
 		}
-		return downloader.getBlockPercent();
+		return mDownloader.getBlockPercent();
 	}
 	
 	private void doStart(){
-		if (mState == STATE_RUNNING || mState == STATE_COMPLETE){
-			// 有任务正在运行，或者已完成，不用再执行
+		if (mState == STATE_RUNNING || (mState == STATE_COMPLETE && !mIsNeedRedownload)){
+			// 有任务正在运行，或者已完成(非重新下载)，不用再执行
 			return;
+		}
+		if (mIsNeedRedownload){
+			mIsNeedRedownload = false;
+			mStartPos = 0l;
 		}
 		mState = STATE_RUNNING;
 		prepareDownloader();
-		mThread = new Thread(downloader);
+		mThread = new Thread(mDownloader);
 		mThread.start();
 	}
 	
 	private void prepareDownloader(){
-		downloader = new AppContinuinglyDownloader(mApp, getFileSavePath(), startPos, mStatusSaver, this);
+		mDownloader = new AppContinuinglyDownloader(mApp, getFileSavePath(), mStartPos, mStatusSaver, this);
 	}
 
 	@Override
 	public void cancel() {
 		// TODO Auto-generated method stub
-		if (downloader != null){
-			downloader.cancel();
+		if (mDownloader != null){
+			mDownloader.cancel();
 		}
 	}
 
@@ -185,13 +224,16 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 		if (mListener != null){
 			mListener.onCancel(id);
 		}
+		if (mIsNeedRedownload){
+			redownload();
+		}
 	}
 
 	@Override
 	public void onProgress(long id, long total, long current) {
 		// TODO Auto-generated method stub
-		startPos = current;
-		this.total = total;
+		mStartPos = current;
+		this.mTotal = total;
 		if (mListener != null){
 			mListener.onProgress(id, total, current);
 		}

@@ -71,6 +71,10 @@ public abstract class ImageWorker {
         if (mImageCache != null) {
             bitmap = mImageCache.getBitmapFromMemCache(String.valueOf(data));
         }
+        
+        if (bitmap != null && bitmap.isRecycled()){
+        	bitmap = null;
+        }
 
         if (bitmap != null) {
             // Bitmap found in memory cache

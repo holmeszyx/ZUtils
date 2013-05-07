@@ -6,6 +6,7 @@ import z.hol.utils.bitmapfun.ImageCache.ImageCacheParams;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 
 /**
@@ -113,5 +114,11 @@ public class ImageDownloaderEx {
 			IMAGE_DOWNLOADER_MAP.put(size, imageDownloaderEx);
 		}
 		return imageDownloaderEx;
+	}
+	
+	public static ImageDownloaderEx getOrCreate(Context context, ImageView imageView){
+		LayoutParams params = imageView.getLayoutParams();
+		SizeInfo size = new SizeInfo(params.width, params.height);
+		return getOrCreate(context, size);
 	}
 }
