@@ -11,7 +11,8 @@ public class AppDownloadManager extends AbsDownloadManager{
 
 	private Context mContext;
 	private AppStatusSaver mStatusSaver;
-	private static AppDownloadManager downloadManager;
+	private static AppDownloadManager sDownloadManager;
+	private final static byte[] sLock = new byte[0];
 	
 	private AppDownloadManager(Context context){
 		super();
@@ -21,11 +22,15 @@ public class AppDownloadManager extends AbsDownloadManager{
 	}
 	
 	public static AppDownloadManager getInstance(Context context){
-		if (downloadManager == null){
-			downloadManager = new AppDownloadManager(context.getApplicationContext());
-			downloadManager.resotreAppTasks();
+		if (sDownloadManager == null){
+			synchronized (sLock) {
+				if (sDownloadManager == null){
+					sDownloadManager = new AppDownloadManager(context.getApplicationContext());
+					sDownloadManager.resotreAppTasks();
+				}
+			}
 		}
-		return downloadManager;
+		return sDownloadManager;
 	}
 	
 	public void closeStatusDb(){
@@ -37,12 +42,16 @@ public class AppDownloadManager extends AbsDownloadManager{
 	}
 	
 	public boolean addTask(SimpleApp app){
+		return addTask(app, true);
+	}
+	
+	public boolean addTask(SimpleApp app, boolean autoStrat){
 		String appSavePath = AppDownloadUtils.getAppSavePath(app.getPackageName());
 		AppDownloadTask task = new AppDownloadTask(app, appSavePath, -1, mStatusSaver, this);
 		if (!hasTask(task)){
 			mStatusSaver.addAppDownload(task.getApp(), task.getFileSavePath());
 		}
-		return super.addTask(task);
+		return super.addTask(task, autoStrat);
 	}
 	
 	/**
@@ -85,21 +94,24 @@ public class AppDownloadManager extends AbsDownloadManager{
 	}
 
 	@Override
-	public void onError(long id, int errorCode) {
+	protected boolean afterOnPauseUiCallback(long id) {
 		// TODO Auto-generated method stub
-		super.onError(id, errorCode);
-		launchWaitTask();
-	}
-
-	@Override
-	public void onCancel(long id) {
-		// TODO Auto-generated method stub
-		super.onCancel(id);
+		if (super.afterOnPauseUiCallback(id)){
+			return true;
+		}
+		
+		// 替换以前的oncancel的重写
 		Task task = getTask(id);
 		if (task != null && task.getStatus() != Task.STATE_WAIT){
 			// 如果不是暂停的等待Task
 			launchWaitTask();
+			return true;
+		}else if (task == null){
+			// 移除的任务被取消
+			launchWaitTask();
+			return true;
 		}
+		return false;
 	}
 
 	/**

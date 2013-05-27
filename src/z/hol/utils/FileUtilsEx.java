@@ -197,7 +197,7 @@ public class FileUtilsEx {
     }
     
     /**
-     * String 写入流
+     * String 写入流，完成后会自动关闭流
      * @param text
      * @param stream
      * @throws IOException
@@ -212,7 +212,7 @@ public class FileUtilsEx {
     }
     
     /**
-     * 从流中完全读出String
+     * 从流中完全读出String，完成后会自动关闭流
      * @param input
      * @param max
      * @param ellipsis

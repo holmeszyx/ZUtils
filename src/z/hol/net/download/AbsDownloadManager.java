@@ -1,12 +1,12 @@
 package z.hol.net.download;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -97,7 +97,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		public int getPercent();
 	}
 	
-	private HashMap<Long, Task> mTaskMap;
+	private ConcurrentHashMap<Long, Task> mTaskMap;
 	private ConcurrentLinkedQueue<Task> mWaitQueue;
 	private AtomicInteger mRunningTask;
 	private AtomicInteger mCompletedTask;
@@ -106,7 +106,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	private List<DownloadUIHandler> mDownloadUIHandlerList;
 	
 	public AbsDownloadManager(){
-		mTaskMap = new HashMap<Long, AbsDownloadManager.Task>();
+		mTaskMap = new ConcurrentHashMap<Long, AbsDownloadManager.Task>();
 		mWaitQueue = new ConcurrentLinkedQueue<AbsDownloadManager.Task>();
 		mRunningTask = new AtomicInteger(0);
 		mCompletedTask = new AtomicInteger(0);
@@ -588,6 +588,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.error(id, errorCode);
 		}
+		afterOnPauseUiCallback(id);
 		if (isTaskNeedRedownload(id)){
 			startTask(id);
 		}
@@ -601,9 +602,26 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 			DownloadUIHandler uiHandler = iter.next();
 			uiHandler.cancel(id);
 		}
+		afterOnPauseUiCallback(id);
 		if (isTaskNeedRedownload(id)){
 			startTask(id);
 		}
+	}
+	
+	/**
+	 * 当pause的UI回调完成后(其它任务操作前，如重新下载任务)，
+	 * 默认如果是一个移除的任务(即移除后，中断操作才触发),
+	 * 将会自动 {@link #taskStoped()} 和 {@link #startWaitTask()}
+	 * @param id
+	 */
+	protected boolean afterOnPauseUiCallback(long id){
+		if (getTask(id) == null){
+			// 一个已移除的任务
+			taskStoped();
+			startWaitTask();
+			return true;
+		}
+		return false;
 	}
 
 	@Override

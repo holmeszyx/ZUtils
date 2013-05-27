@@ -31,6 +31,11 @@ public interface AppStatusSaver extends DatabaseHandler{
 		 public static final String VERSION_CODE = "ver_code";
 		 public static final String ICON = "icon";	
 		 public static final String START_POS = "start_pos";
+		 
+		 public static final String Data1 = "data1";
+		 public static final String Data2 = "data2";
+		 public static final String Data3 = "data3";
+		 
 		 public static final String DEFAULT_SAVE_PATH = "/sdcard/download/";
 	 }
 
@@ -86,7 +91,10 @@ public interface AppStatusSaver extends DatabaseHandler{
 		APP.URL,		// 8
 		APP.VERSION_CODE,	// 9
 		APP.VERSION_NAME,		//10
-		APP.STATE	// 11
+		APP.STATE,	// 11
+		APP.Data1,	// 12
+		APP.Data2,	// 13
+		APP.Data3	// 14
 	 }; 
 	 
 	 /**

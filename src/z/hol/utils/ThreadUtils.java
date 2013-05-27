@@ -14,4 +14,16 @@ public class ThreadUtils {
 			task.cancel(true);
 		}
 	}
+	
+	/**
+	 * 一个Task是否在运行中
+	 * @param task
+	 * @return
+	 */
+	public static boolean isAsyncTaskRunning(@SuppressWarnings("rawtypes") AsyncTask task){
+		if (task != null && task.getStatus() != Status.FINISHED){
+			return true;
+		}
+		return false;
+	}
 }

@@ -1,8 +1,11 @@
 package z.hol.net.download.app;
 
 
+import java.io.File;
+
 import z.hol.model.SimpleApp;
 import z.hol.net.download.AbsDownloadManager;
+import z.hol.net.download.ContinuinglyDownloader;
 import z.hol.net.download.ContinuinglyDownloader.DownloadListener;
 import z.hol.net.download.task.AppTask;
 
@@ -124,6 +127,7 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 		// TODO Auto-generated method stub
 		mIsNeedRedownload = true;
 		cancel();
+		restoreParamsForRedownload();
 		//restore();
 		
 		// 改为到下载管理器中去控制
@@ -136,12 +140,13 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 	}
 	
 	/**
-	 * 重置下载的状态, 在非运行状态才有效
+	 * 重置参数
 	 */
-	@SuppressWarnings("unused")
-	private void restore(){
+	private synchronized void restoreParamsForRedownload(){
 		if (mState == STATE_PAUSE || mState == STATE_COMPLETE){
-			mStartPos = 0;
+			// 非运行状态
+			mStartPos = 0l;
+			mDownloader = null;
 		}
 	}
 
@@ -163,7 +168,7 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 		return mDownloader.getBlockPercent();
 	}
 	
-	private void doStart(){
+	private synchronized void doStart(){
 		if (mState == STATE_RUNNING || (mState == STATE_COMPLETE && !mIsNeedRedownload)){
 			// 有任务正在运行，或者已完成(非重新下载)，不用再执行
 			return;
@@ -171,6 +176,16 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 		if (mIsNeedRedownload){
 			mIsNeedRedownload = false;
 			mStartPos = 0l;
+			File file = new File(mSavePath);
+			if (file.exists()){
+				file.delete();
+			}else{
+				file = new File(mSavePath + ContinuinglyDownloader.TEMP_FILE_EX_NAME);
+				if (file.exists()){
+					file.delete();
+				}
+			}
+			file = null;
 		}
 		mState = STATE_RUNNING;
 		prepareDownloader();
@@ -221,11 +236,12 @@ public class AppDownloadTask implements AppTask, DownloadListener{
 	public void onCancel(long id) {
 		// TODO Auto-generated method stub
 		mState = STATE_PAUSE;
+		if (mIsNeedRedownload){
+			// 重置数据, 并且将会在下载管理器中被重新启动
+			restoreParamsForRedownload();
+		}
 		if (mListener != null){
 			mListener.onCancel(id);
-		}
-		if (mIsNeedRedownload){
-			redownload();
 		}
 	}
 

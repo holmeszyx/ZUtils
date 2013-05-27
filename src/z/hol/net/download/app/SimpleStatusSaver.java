@@ -50,6 +50,10 @@ public class SimpleStatusSaver implements AppStatusSaver{
 		values.put(APP.VERSION_NAME, app.getVersionName());
 		//db.execSQL("insert into app_download_task() ", );
 		values.put(APP.START_POS, 0);
+		
+		values.put(APP.Data1, app.getUserData1());
+		values.put(APP.Data2, app.getUserData2());
+		values.put(APP.Data3, app.getUserData3());
 		db.insert(SimpleStateSaverDatabaseHelper.TABLE_APP_TASK, null, values);
 	}
 
@@ -117,6 +121,9 @@ public class SimpleStatusSaver implements AppStatusSaver{
 //		APP.VERSION_CODE,	// 9
 //		APP.VERSION_NAME		//10
 //		APP.STATE	// 11
+//		APP.Data1	//12
+//		APP.Data2	//13
+//		APP.Data3	//14
 		
 		
 		List<AppDownloadTask> tasks = new ArrayList<AppDownloadTask>();
@@ -134,6 +141,9 @@ public class SimpleStatusSaver implements AppStatusSaver{
 				app.setAppUrl(c.getString(8));
 				app.setVersionCode(c.getInt(9));
 				app.setVersionName(c.getString(10));
+				app.setUserData1(c.getString(12));
+				app.setUserData2(c.getString(13));
+				app.setUserData3(c.getString(14));
 				String saveFile = c.getString(6);
 				long startPos = c.getLong(7);
 				int state = c.getInt(11);
