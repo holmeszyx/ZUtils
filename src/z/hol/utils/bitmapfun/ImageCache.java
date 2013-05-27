@@ -18,20 +18,18 @@ package z.hol.utils.bitmapfun;
 
 import java.io.File;
 
-import z.hol.utils.BuildConfig;
 import z.hol.utils.LruCache;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 /**
  * This class holds our bitmap caches (memory and disk).
  */
 public class ImageCache {
-    private static final String TAG = "ImageCache";
+    //private static final String TAG = "ImageCache";
 
     // Default memory cache size
     private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 1024 * 5; // 5MB
@@ -121,9 +119,9 @@ public class ImageCache {
      */
     private void init(Context context, ImageCacheParams cacheParams) {
         final File diskCacheDir = DiskLruCache.getDiskCacheDir(context, cacheParams.uniqueName);
-        if (BuildConfig.DEBUG){
-        	Log.d(TAG, "disk cache is " + diskCacheDir.getAbsolutePath());
-        }
+       // if (BuildConfig.DEBUG){
+        //	Log.d(TAG, "disk cache is " + diskCacheDir.getAbsolutePath());
+        //}
 
         // Set up disk cache
         if (cacheParams.diskCacheEnabled) {
@@ -177,9 +175,9 @@ public class ImageCache {
         if (mMemoryCache != null) {
             final Bitmap memBitmap = mMemoryCache.get(data);
             if (memBitmap != null) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Memory cache hit");
-                }
+                //if (BuildConfig.DEBUG) {
+                //    Log.d(TAG, "Memory cache hit");
+                //}
                 return memBitmap;
             }
         }

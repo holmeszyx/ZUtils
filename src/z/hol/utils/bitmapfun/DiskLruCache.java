@@ -179,18 +179,26 @@ public class DiskLruCache {
         synchronized (mLinkedHashMap) {
             final String file = mLinkedHashMap.get(key);
             if (file != null) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Disk cache hit");
+                //if (BuildConfig.DEBUG) {
+                //    Log.d(TAG, "Disk cache hit");
+                //}
+                try{
+                	return BitmapFactory.decodeFile(file, options);
+                }catch (OutOfMemoryError e){
+                	System.gc();
                 }
-                return BitmapFactory.decodeFile(file, options);
             } else {
                 final String existingFile = createFilePath(mCacheDir, key);
                 if (new File(existingFile).exists()) {
                     put(key, existingFile);
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Disk cache hit (existing file)");
+                    //if (BuildConfig.DEBUG) {
+                    //    Log.d(TAG, "Disk cache hit (existing file)");
+                    //}
+                    try{
+                    	return BitmapFactory.decodeFile(existingFile, options);
+                    } catch (OutOfMemoryError e){
+                    	System.gc();
                     }
-                    return BitmapFactory.decodeFile(existingFile, options);
                 }
             }
             return null;
