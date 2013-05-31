@@ -12,7 +12,7 @@ public class PhoneState {
 	public static final int NETWORK_TYPE_EHRPD = 14;
 	public static final int NETWORK_TYPE_HSPAP = 15;
 	
-	TelephonyManager mTelephonyManager;
+	private TelephonyManager mTelephonyManager;
 	
 	private static PhoneState mPhoneState;
 	

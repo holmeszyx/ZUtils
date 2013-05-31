@@ -103,26 +103,51 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 		}
 	};
 	
-	private HttpClient httpClient;
-	private static HashMap<String, String> commonHeader = null;
-	private HashMap<String, String> mHeaders;
+	private static HashMap<String, String> sCommonHeader = null;
+
 	protected Context mContext;
+	private HttpClient httpClient;
+	private HashMap<String, String> mHeaders;
 	private boolean gzipEnable = true;
+	private boolean mAutoShutdown;
 	
+	/**
+	 * 生成一个http请求器,
+	 * 默认关闭https, 开启gzip, 开启自动关闭连接
+	 */
 	public HttpDataFetch(){
-		this(null);
+		this(true);
 		//httpClient = getSSLHttpClient();
+	}
+
+	/**
+	 * 生成一个Http请求器,默认关闭https，开启gzip
+	 * @param autoshutdown 是否在完成一个请求后自动关闭连接
+	 */
+	public HttpDataFetch(boolean autoshutdown){
+		this(null, false, true, autoshutdown);
 	}
 	
 	public HttpDataFetch(Context context){
 		this(context, false);
 	}
-	
+
 	public HttpDataFetch(Context context, boolean https){
 		this(context, https, true);
 	}
 	
-	public HttpDataFetch(Context context, boolean https, boolean gzip){
+	public HttpDataFetch(Context context, boolean https, boolean autoshutdown){
+		this(context, https, true, autoshutdown);
+	}
+	
+	/**
+	 * 生成一个Http请求器。
+	 * @param context
+	 * @param https 是否使用https
+	 * @param gzip	是否开启gzip
+	 * @param autoshutdown	是否完成一个请求后自动关闭连接
+	 */
+	public HttpDataFetch(Context context, boolean https, boolean gzip, boolean autoshutdown){
 		mContext = context;
 		if (https){
 			httpClient = getNewHttpClient();
@@ -138,6 +163,8 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 			defaultHttpClient.addRequestInterceptor(HTTP_REQUEST_INTERCEPTOR);
 			defaultHttpClient.addResponseInterceptor(HTTP_RESPONSE_INTERCEPTOR);
 		}
+		
+		mAutoShutdown = autoshutdown;
 	}
 	
 	
@@ -170,18 +197,18 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 		if (name == null || value == null){
 			return;
 		}
-		if (commonHeader == null){
-			commonHeader = new HashMap<String, String>();
+		if (sCommonHeader == null){
+			sCommonHeader = new HashMap<String, String>();
 		}
-		commonHeader.put(name, value);
+		sCommonHeader.put(name, value);
 	}
 	
 	/**
 	 * 清空通用头
 	 */
 	public static void clearCommonHeader(){
-		if (commonHeader != null){
-			commonHeader.clear();
+		if (sCommonHeader != null){
+			sCommonHeader.clear();
 		}
 	}
 	
@@ -203,10 +230,10 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	}
 	
 	private static void insertCommonHeaders(HttpRequestBase httpRequest){
-		if (commonHeader == null || commonHeader.isEmpty()){
+		if (sCommonHeader == null || sCommonHeader.isEmpty()){
 			return;
 		}
-		Set<Entry<String, String>> headers = commonHeader.entrySet();
+		Set<Entry<String, String>> headers = sCommonHeader.entrySet();
 		Iterator<Entry<String, String>> iter = headers.iterator();
 		while(iter.hasNext()){
 			Entry<String, String> header = iter.next();
@@ -232,6 +259,7 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 			e.printStackTrace();
 		}
 		
+		autoShutdown();
 		
 		return data;
 	}
@@ -278,6 +306,7 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 			e.printStackTrace();
 		}
 		
+		autoShutdown();
 		
 		return data;
 	}
@@ -313,11 +342,18 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		autoShutdown();
 	}
 
 	@Override
 	public void httpPostNoResponse(String url, List<NameValuePair> params) {
 		httpPostNoResponse(NetConst.UNKNOWN, url, params);
+	}
+	
+	private void autoShutdown(){
+		if (mAutoShutdown){
+			shutdown();
+		}
 	}
 	
 	/**
