@@ -1,4 +1,4 @@
-package z.hol.net.download;
+package z.hol.db;
 
 import android.database.sqlite.SQLiteDatabase;
 
@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
  * @author holmes
  *
  */
-public interface DatabaseHandler {
+public interface DatabaseHandler extends Transactional{
 
 	/**
 	 * 打开一个可读写数据库
@@ -32,19 +32,4 @@ public interface DatabaseHandler {
 	 * 关闭打开的数据库
 	 */
 	public void closeDb();
-	
-	/**
-	 * 开始事务
-	 */
-	public void beginTransaction();
-	
-	/**
-	 * 事务成功
-	 */
-	public void setTransactionSuccessful();
-	
-	/**
-	 * 事务结束
-	 */
-	public void endTransaction();
 }

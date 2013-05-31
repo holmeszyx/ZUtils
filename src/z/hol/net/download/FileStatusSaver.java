@@ -1,5 +1,7 @@
 package z.hol.net.download;
 
+import z.hol.db.DatabaseHandler;
+
 public interface FileStatusSaver extends DatabaseHandler{
 
 	public static interface File{
