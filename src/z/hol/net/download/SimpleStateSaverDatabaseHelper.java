@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
-	public static final int VERSION = 3;
+	public static final int VERSION = 5;
 	public static final String DATABASE = "download_status.db";
 	public static final String TABLE_APP_TASK = "app_download_task";
 	public static final String TABLE_FILE_TASK = "file_download_task";
@@ -33,10 +33,11 @@ public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
 			 		);
 		 
 		 db.execSQL("CREATE TABLE IF NOT EXISTS file_download_task" +
-			 		"( _id INTEGER PRIMARY KEY, len INTEGER, " +
+			 		"( _id INTEGER PRIMARY KEY, sub_id INTEGER, len INTEGER, " +
 			 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
-			 		"name TEXT, _int1 INTEGER, _int2 INTEGER," +
-			 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT" +
+			 		"name TEXT, _int1 INTEGER, _int2 INTEGER, _int3 INTEGER, _int4 INTEGER," +
+			 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT," +
+			 		"add_time INTEGER, done_time INTEGER, sub_type INTEGER" +
 			 		")"
 				 );
 	}
@@ -46,7 +47,9 @@ public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
 		// TODO Auto-generated method stub
 		// db.execSQL("DROP TABLE IF EXISTS app_download_task");
 		// onCreate(db);
-		if (oldVersion == 1){
+		int internalVersion = oldVersion;
+		
+		if (internalVersion == 1){
 			 db.execSQL("CREATE TABLE IF NOT EXISTS file_download_task" +
 				 		"( _id INTEGER PRIMARY KEY, len INTEGER, " +
 				 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
@@ -54,7 +57,9 @@ public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
 				 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT" +
 				 		")"
 				 		);
-		}else if (oldVersion == 2){
+			 internalVersion ++;
+		}
+		if (internalVersion == 2){
 			db.execSQL("DROP TABLE app_download_task");
 			db.execSQL("CREATE TABLE IF NOT EXISTS app_download_task" +
 				 		"( _id INTEGER PRIMARY KEY, len INTEGER, " +
@@ -63,6 +68,30 @@ public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
 				 		" data1 TEXT, data2 TEXT, data3 TEXT" +	
 				 		")"
 				 		);
+			 internalVersion ++;
+		}
+		if (internalVersion == 3){
+			db.execSQL("DROP TABLE file_download_task");
+			db.execSQL("CREATE TABLE IF NOT EXISTS file_download_task" +
+				 		"( _id INTEGER PRIMARY KEY, len INTEGER, " +
+				 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
+				 		"name TEXT, _int1 INTEGER, _int2 INTEGER, _int3 INTEGER, _int4 INTEGER," +
+				 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT" +
+				 		")"
+					 );
+			internalVersion ++;
+		}
+		if (internalVersion == 4){
+			db.execSQL("DROP TABLE file_download_task");
+			 db.execSQL("CREATE TABLE IF NOT EXISTS file_download_task" +
+				 		"( _id INTEGER PRIMARY KEY, sub_id INTEGER, len INTEGER, " +
+				 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
+				 		"name TEXT, _int1 INTEGER, _int2 INTEGER, _int3 INTEGER, _int4 INTEGER," +
+				 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT" +
+				 		"add_time INTEGER, done_time INTEGER, sub_type INTEGER" +
+				 		")"
+					 );
+			internalVersion ++;
 		}
 	}
 

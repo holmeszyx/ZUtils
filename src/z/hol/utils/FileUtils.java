@@ -265,5 +265,22 @@ public class FileUtils {
    		sdcard = null;
    	 }
    	 return SDCARD_PATH;
-    }    
+    }
+    
+    /**
+     * 获取目录分区的块信息
+     * @param dir
+     * @return 0 total, 1 free
+     */
+    public static long[] getDirSizeInfo(String dir){
+		long[] sizes = new long[2];
+		StatFs stat = new StatFs(dir);
+		long block = (long) stat.getBlockSize();
+		long total = block * (long) stat.getBlockCount();
+		long free = block * (long) stat.getAvailableBlocks();
+		
+		sizes[0] = total;
+		sizes[1] = free;
+		return sizes;
+	}
 }
