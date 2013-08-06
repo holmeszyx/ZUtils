@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import z.hol.model.SimpleFile;
 import z.hol.net.download.AbsDownloadManager;
-import z.hol.net.download.app.AppDownloadTask;
 import android.content.Context;
 
 public class FileDownloadManager extends AbsDownloadManager{
@@ -128,7 +127,7 @@ public class FileDownloadManager extends AbsDownloadManager{
 		return task;
 	}
 	
-	public int getTaskStatus(long subId, int type){
+	public int getTaskState(long subId, int type){
 		return getTaskState(getTaskIdWithSubId(subId, type));
 	}
 	
@@ -144,9 +143,12 @@ public class FileDownloadManager extends AbsDownloadManager{
 				lastId = task.getTaskId();
 			}
 			int taskStatus = task.getStatus();
-			if (taskStatus == Task.STATE_RUNNING || taskStatus == Task.STATE_PERPARE || taskStatus == Task.STATE_WAIT){
+//			if (taskStatus == Task.STATE_RUNNING || taskStatus == Task.STATE_PERPARE || taskStatus == Task.STATE_WAIT){
+//				task.setStatus(Task.STATE_PAUSE);
+//				//task.set
+//			}
+			if (taskStatus != Task.STATE_COMPLETE){
 				task.setStatus(Task.STATE_PAUSE);
-				//task.set
 			}
 			addTask(task, false);
 		}
@@ -164,9 +166,9 @@ public class FileDownloadManager extends AbsDownloadManager{
 	protected void onCancelWaitTask(Task task) {
 		// TODO Auto-generated method stub
 		super.onCancelWaitTask(task);
-		if (task instanceof AppDownloadTask){
-			AppDownloadTask appTask = (AppDownloadTask) task;
-			appTask.onCancel(appTask.getTaskId());
+		if (task instanceof FileDownloadTask){
+			FileDownloadTask fileTask = (FileDownloadTask) task;
+			fileTask.onCancel(fileTask.getTaskId());
 		}
 	}
 

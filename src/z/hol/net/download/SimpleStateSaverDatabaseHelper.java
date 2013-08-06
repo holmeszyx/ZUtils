@@ -87,7 +87,7 @@ public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
 				 		"( _id INTEGER PRIMARY KEY, sub_id INTEGER, len INTEGER, " +
 				 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
 				 		"name TEXT, _int1 INTEGER, _int2 INTEGER, _int3 INTEGER, _int4 INTEGER," +
-				 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT" +
+				 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT," +
 				 		"add_time INTEGER, done_time INTEGER, sub_type INTEGER" +
 				 		")"
 					 );

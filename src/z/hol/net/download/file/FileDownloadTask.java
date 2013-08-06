@@ -73,7 +73,7 @@ public class FileDownloadTask implements FileTask, DownloadListener{
 		doStart();
 	}
 	
-	private void doStart(){
+	private synchronized void doStart(){
 		if (mState == STATE_RUNNING || (mState == STATE_COMPLETE && !mIsNeedRedownload)){
 			// 有任务正在运行，或者已完成(非重新下载)，不用再执行
 			return;
@@ -150,6 +150,9 @@ public class FileDownloadTask implements FileTask, DownloadListener{
 		if (mIsWait){
 			return STATE_WAIT;
 		}
+		//else if (mState == STATE_INVALID){
+		//	mState = STATE_PAUSE;
+		//}
 		return mState;
 	}
 
