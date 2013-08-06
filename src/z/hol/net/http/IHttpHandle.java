@@ -9,7 +9,7 @@ import org.apache.http.NameValuePair;
  * @author holmes
  *
  */
-public interface HttpHandleInf {
+public interface IHttpHandle {
 	
 	/**
 	 * get data with http by http get method

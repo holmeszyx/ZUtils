@@ -51,7 +51,7 @@ import z.hol.net.http.entity.GzipDecompressingEntity;
 import z.hol.net.http.entity.JsonEntity;
 import android.content.Context;
 
-public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
+public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	
 	public static final String HTTP_HEAD_SESSION_KEY = "Cookie";
 	public static final String HTTP_HEAD_SESSION_VALUE_HEAD = "sessionid=";
@@ -110,6 +110,7 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	private HashMap<String, String> mHeaders;
 	private boolean gzipEnable = true;
 	private boolean mAutoShutdown;
+	private boolean mIsIgnoreCommenHeaders = false;
 	
 	/**
 	 * 生成一个http请求器,
@@ -189,6 +190,22 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	}
 	
 	/**
+	 * 设置是否忽略通用头
+	 * @param enable
+	 */
+	public void setIgnoreCommenHeadersEnable(boolean enable){
+		mIsIgnoreCommenHeaders = enable;
+	}
+	
+	/**
+	 * 是否已经忽略通用头
+	 * @return
+	 */
+	public boolean isIgnoreCommenHeaders(){
+		return mIsIgnoreCommenHeaders;
+	}
+	
+	/**
 	 * 添加通用头
 	 * @param name
 	 * @param value
@@ -201,6 +218,16 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 			sCommonHeader = new HashMap<String, String>();
 		}
 		sCommonHeader.put(name, value);
+	}
+	
+	/**
+	 * 移除一个通用头
+	 * @param name
+	 */
+	public static void removeCommonHeader(String name){
+		if (name != null && sCommonHeader != null){
+			sCommonHeader.remove(name);
+		}
 	}
 	
 	/**
@@ -217,7 +244,9 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	 * @param httpRequest
 	 */
 	private void insertAddedHeaders(HttpRequestBase httpRequest){
-		insertCommonHeaders(httpRequest);
+		if (!mIsIgnoreCommenHeaders){
+			insertCommonHeaders(httpRequest);
+		}
 		if (mHeaders == null || mHeaders.isEmpty()){
 			return;
 		}
