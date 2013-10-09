@@ -25,6 +25,10 @@ Android Permission required
 Log
 ---
 
+#### v0.2.4
+* merge the download mangers to a general download manger called FileDownloadManager
+* A simple XOR encrypt/decrypt IO Stream 
+
 #### v0.2.3
 * Transplant a powerful image downloader from bitmapfun of google,
   Use it by ImageDownloaderEx which like the old ImageDownload 
