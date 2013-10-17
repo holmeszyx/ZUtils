@@ -10,7 +10,14 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.http.Header;
+import org.apache.http.HeaderElement;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
@@ -37,10 +44,13 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
+import org.apache.http.protocol.HttpContext;
+import org.json.JSONException;
 
-import android.content.Context;
+import z.hol.net.http.entity.GzipDecompressingEntity;
+import z.hol.net.http.entity.JsonEntity;
 
-public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
+public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	
 	public static final String HTTP_HEAD_SESSION_KEY = "Cookie";
 	public static final String HTTP_HEAD_SESSION_VALUE_HEAD = "sessionid=";
@@ -49,24 +59,95 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	
 	public static String token = "";
 	public static long lastTimestamp = 0;
-	public static long lastSMSThreadTimestamp = 0;
 	public static String session = null;
 	
+	/**
+	 * Gzip请求插值器
+	 */
+	private static final HttpRequestInterceptor HTTP_REQUEST_INTERCEPTOR = new HttpRequestInterceptor() {
+		
+		@Override
+		public void process(HttpRequest request, HttpContext context)
+				throws HttpException, IOException {
+			// TODO Auto-generated method stub
+            if (!request.containsHeader("Accept-Encoding")) {
+                request.addHeader("Accept-Encoding", "gzip");
+            }
+		}
+	};
+	
+	/**
+	 * gzip响应插值器
+	 */
+	private static final HttpResponseInterceptor HTTP_RESPONSE_INTERCEPTOR = new HttpResponseInterceptor() {
+		
+		@Override
+		public void process(HttpResponse response, HttpContext context)
+				throws HttpException, IOException {
+			// TODO Auto-generated method stub
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                Header ceheader = entity.getContentEncoding();
+                if (ceheader != null) {
+                    HeaderElement[] codecs = ceheader.getElements();
+                    for (int i = 0; i < codecs.length; i++) {
+                        if (codecs[i].getName().equalsIgnoreCase("gzip")) {
+                            response.setEntity(
+                                    new GzipDecompressingEntity(response.getEntity()));
+                            return;
+                        }
+                    }
+                }
+            }
+		}
+	};
+	
+	private static HashMap<String, String> sCommonHeader = null;
+
+	//protected Context mContext;
 	private HttpClient httpClient;
 	private HashMap<String, String> mHeaders;
-	protected Context mContext;
+	private boolean gzipEnable = true;
+	private boolean mAutoShutdown;
+	private boolean mIsIgnoreCommenHeaders = false;
 	
+	/**
+	 * 生成一个http请求器,
+	 * 默认关闭https, 开启gzip, 开启自动关闭连接
+	 */
 	public HttpDataFetch(){
-		this(null);
+		this(true);
 		//httpClient = getSSLHttpClient();
 	}
-	
-	public HttpDataFetch(Context context){
-		this(context, false);
+
+	/**
+	 * 生成一个Http请求器,默认关闭https，开启gzip
+	 * @param autoshutdown 是否在完成一个请求后自动关闭连接
+	 */
+	public HttpDataFetch(boolean autoshutdown){
+		this(false, true, autoshutdown);
 	}
 	
-	public HttpDataFetch(Context context, boolean https){
-		mContext = context;
+	//public HttpDataFetch(Context context){
+	//	this(context, false);
+	//}
+
+	//public HttpDataFetch(boolean https){
+	//	this(https, true);
+	//}
+	
+	public HttpDataFetch(boolean https, boolean autoshutdown){
+		this(https, true, autoshutdown);
+	}
+	
+	/**
+	 * 生成一个Http请求器。
+	 * @param https 是否使用https
+	 * @param gzip	是否开启gzip
+	 * @param autoshutdown	是否完成一个请求后自动关闭连接
+	 */
+	public HttpDataFetch(boolean https, boolean gzip, boolean autoshutdown){
+		//mContext = context;
 		if (https){
 			httpClient = getNewHttpClient();
 		}else{
@@ -74,6 +155,15 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 		}
 		httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 15000); 
 		httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 10000); 
+		gzipEnable = gzip;
+		
+		if (gzipEnable){
+			DefaultHttpClient defaultHttpClient = (DefaultHttpClient) httpClient;
+			defaultHttpClient.addRequestInterceptor(HTTP_REQUEST_INTERCEPTOR);
+			defaultHttpClient.addResponseInterceptor(HTTP_RESPONSE_INTERCEPTOR);
+		}
+		
+		mAutoShutdown = autoshutdown;
 	}
 	
 	
@@ -98,14 +188,79 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	}
 	
 	/**
+	 * 设置是否忽略通用头
+	 * @param enable
+	 */
+	public void setIgnoreCommenHeadersEnable(boolean enable){
+		mIsIgnoreCommenHeaders = enable;
+	}
+	
+	/**
+	 * 是否已经忽略通用头
+	 * @return
+	 */
+	public boolean isIgnoreCommenHeaders(){
+		return mIsIgnoreCommenHeaders;
+	}
+	
+	/**
+	 * 添加通用头
+	 * @param name
+	 * @param value
+	 */
+	public static void addCommonHeader(String name, String value){
+		if (name == null || value == null){
+			return;
+		}
+		if (sCommonHeader == null){
+			sCommonHeader = new HashMap<String, String>();
+		}
+		sCommonHeader.put(name, value);
+	}
+	
+	/**
+	 * 移除一个通用头
+	 * @param name
+	 */
+	public static void removeCommonHeader(String name){
+		if (name != null && sCommonHeader != null){
+			sCommonHeader.remove(name);
+		}
+	}
+	
+	/**
+	 * 清空通用头
+	 */
+	public static void clearCommonHeader(){
+		if (sCommonHeader != null){
+			sCommonHeader.clear();
+		}
+	}
+	
+	/**
 	 * 应用自己添加的一些头部
 	 * @param httpRequest
 	 */
 	private void insertAddedHeaders(HttpRequestBase httpRequest){
+		if (!mIsIgnoreCommenHeaders){
+			insertCommonHeaders(httpRequest);
+		}
 		if (mHeaders == null || mHeaders.isEmpty()){
 			return;
 		}
 		Set<Entry<String, String>> headers = mHeaders.entrySet();
+		Iterator<Entry<String, String>> iter = headers.iterator();
+		while(iter.hasNext()){
+			Entry<String, String> header = iter.next();
+			httpRequest.addHeader(header.getKey(), header.getValue());
+		}
+	}
+	
+	private static void insertCommonHeaders(HttpRequestBase httpRequest){
+		if (sCommonHeader == null || sCommonHeader.isEmpty()){
+			return;
+		}
+		Set<Entry<String, String>> headers = sCommonHeader.entrySet();
 		Iterator<Entry<String, String>> iter = headers.iterator();
 		while(iter.hasNext()){
 			Entry<String, String> header = iter.next();
@@ -131,6 +286,7 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 			e.printStackTrace();
 		}
 		
+		autoShutdown();
 		
 		return data;
 	}
@@ -145,15 +301,23 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 	public Response httpGet(String url) {
 		return httpGet(NetConst.UNKNOWN, url);
 	}
-
+	
 	@Override
-	public Response httpPost(int type, String url, List<NameValuePair> params) {
+	public Response httpPost(int type, String url, List<NameValuePair> params,
+			boolean json) {
+		// TODO Auto-generated method stub
 		Response data = null;
 		HttpPost post = new HttpPost(url);
 		try {
 			insertAddedHeaders(post);
 			if (params != null){
-				post.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+				HttpEntity entity = null;
+				if (json){
+					entity = new JsonEntity(params, HTTP.UTF_8);
+				}else{
+					entity = new UrlEncodedFormEntity(params, HTTP.UTF_8);
+				}
+				post.setEntity(entity);
 			}
 			HttpResponse response = httpClient.execute(post);
 			data = new Response(type, response);
@@ -164,10 +328,19 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
+		autoShutdown();
 		
 		return data;
+	}
+
+	@Override
+	public Response httpPost(int type, String url, List<NameValuePair> params) {
+		return httpPost(type, url, params, false);
 	}
 	
 	@Override
@@ -196,11 +369,18 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		autoShutdown();
 	}
 
 	@Override
 	public void httpPostNoResponse(String url, List<NameValuePair> params) {
 		httpPostNoResponse(NetConst.UNKNOWN, url, params);
+	}
+	
+	private void autoShutdown(){
+		if (mAutoShutdown){
+			shutdown();
+		}
 	}
 	
 	/**
@@ -210,7 +390,7 @@ public class HttpDataFetch implements HttpHandleInf, HttpHeaderAddible{
 		httpClient.getConnectionManager().shutdown();
 	}
 	
-	public static String getToken(Context context){
+	public static String getToken(){
 		String token = "";
 		return token;
 	}

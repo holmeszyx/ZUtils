@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 
@@ -25,8 +26,11 @@ public class Response {
 		statusCode = httpResp.getStatusLine().getStatusCode();
 		headers = httpResp.getAllHeaders();
 		try {
-			rawContent = EntityUtils.toByteArray(httpResp.getEntity());
-			httpResp.getEntity().consumeContent();
+			HttpEntity entry = httpResp.getEntity();
+			if (entry != null){
+				rawContent = EntityUtils.toByteArray(httpResp.getEntity());
+				httpResp.getEntity().consumeContent();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -71,7 +75,7 @@ public class Response {
 	}
 	
 	public String getUtf8ContentString(){
-		if (strContent == null){
+		if (strContent == null && rawContent != null){
 			try {
 				strContent = new String(rawContent, "UTF-8");
 			} catch (UnsupportedEncodingException e) {

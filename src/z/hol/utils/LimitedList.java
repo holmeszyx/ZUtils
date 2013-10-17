@@ -28,7 +28,7 @@ public class LimitedList <T>{
 			throw new IllegalArgumentException("limit must larger than 0 , but now limit is " + limit);
 		}
 		mLimit = limit;
-		mList = new ArrayList<T>();
+		mList = new ArrayList<T>(mLimit);
 	}
 	
 	/**
@@ -45,7 +45,7 @@ public class LimitedList <T>{
 	 */
 	public List<T> getCurrentList(){
 		List<T> list = mList;
-		mList = new ArrayList<T>();
+		mList = new ArrayList<T>(mLimit);
 		mCurrentSize = 0;
 		return list;
 	}

@@ -6,9 +6,10 @@ import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
-	public static final int VERSION = 1;
+	public static final int VERSION = 5;
 	public static final String DATABASE = "download_status.db";
 	public static final String TABLE_APP_TASK = "app_download_task";
+	public static final String TABLE_FILE_TASK = "file_download_task";
 	
 	public SimpleStateSaverDatabaseHelper(Context context){
 		this(context, DATABASE, null, VERSION);
@@ -26,15 +27,72 @@ public class SimpleStateSaverDatabaseHelper extends SQLiteOpenHelper{
 		 db.execSQL("CREATE TABLE IF NOT EXISTS app_download_task" +
 			 		"( _id INTEGER PRIMARY KEY, len INTEGER, " +
 			 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
-			 		"pkg TEXT, name TEXT, ver_name TEXT, ver_code INTEGER, icon TEXT)"
+			 		"pkg TEXT, name TEXT, ver_name TEXT, ver_code INTEGER, icon TEXT," +
+			 		" data1 TEXT, data2 TEXT, data3 TEXT" +	
+			 		")"
 			 		);
+		 
+		 db.execSQL("CREATE TABLE IF NOT EXISTS file_download_task" +
+			 		"( _id INTEGER PRIMARY KEY, sub_id INTEGER, len INTEGER, " +
+			 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
+			 		"name TEXT, _int1 INTEGER, _int2 INTEGER, _int3 INTEGER, _int4 INTEGER," +
+			 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT," +
+			 		"add_time INTEGER, done_time INTEGER, sub_type INTEGER" +
+			 		")"
+				 );
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		// TODO Auto-generated method stub
-		db.execSQL("DROP TABLE IF EXISTS app_download_task");
-		onCreate(db);
+		// db.execSQL("DROP TABLE IF EXISTS app_download_task");
+		// onCreate(db);
+		int internalVersion = oldVersion;
+		
+		if (internalVersion == 1){
+			 db.execSQL("CREATE TABLE IF NOT EXISTS file_download_task" +
+				 		"( _id INTEGER PRIMARY KEY, len INTEGER, " +
+				 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
+				 		"name TEXT, _int1 INTEGER, _int2 INTEGER," +
+				 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT" +
+				 		")"
+				 		);
+			 internalVersion ++;
+		}
+		if (internalVersion == 2){
+			db.execSQL("DROP TABLE app_download_task");
+			db.execSQL("CREATE TABLE IF NOT EXISTS app_download_task" +
+				 		"( _id INTEGER PRIMARY KEY, len INTEGER, " +
+				 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
+				 		"pkg TEXT, name TEXT, ver_name TEXT, ver_code INTEGER, icon TEXT," +
+				 		" data1 TEXT, data2 TEXT, data3 TEXT" +	
+				 		")"
+				 		);
+			 internalVersion ++;
+		}
+		if (internalVersion == 3){
+			db.execSQL("DROP TABLE file_download_task");
+			db.execSQL("CREATE TABLE IF NOT EXISTS file_download_task" +
+				 		"( _id INTEGER PRIMARY KEY, len INTEGER, " +
+				 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
+				 		"name TEXT, _int1 INTEGER, _int2 INTEGER, _int3 INTEGER, _int4 INTEGER," +
+				 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT" +
+				 		")"
+					 );
+			internalVersion ++;
+		}
+		if (internalVersion == 4){
+			db.execSQL("DROP TABLE file_download_task");
+			 db.execSQL("CREATE TABLE IF NOT EXISTS file_download_task" +
+				 		"( _id INTEGER PRIMARY KEY, sub_id INTEGER, len INTEGER, " +
+				 		"len_formated TEXT, state INTEGER, url TEXT, save_file TEXT, start_pos INTEGER, " +
+				 		"name TEXT, _int1 INTEGER, _int2 INTEGER, _int3 INTEGER, _int4 INTEGER," +
+				 		" data1 TEXT, data2 TEXT, data3 TEXT, data4 TEXT, data5 TEXT," +
+				 		"add_time INTEGER, done_time INTEGER, sub_type INTEGER" +
+				 		")"
+					 );
+			internalVersion ++;
+		}
 	}
 
 }

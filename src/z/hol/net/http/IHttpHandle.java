@@ -9,7 +9,7 @@ import org.apache.http.NameValuePair;
  * @author holmes
  *
  */
-public interface HttpHandleInf {
+public interface IHttpHandle {
 	
 	/**
 	 * get data with http by http get method
@@ -28,6 +28,8 @@ public interface HttpHandleInf {
 	 * @return
 	 */
 	public Response httpPost(int type, String url, List<NameValuePair> params);
+	
+	public Response httpPost(int type, String url, List<NameValuePair> params, boolean json);
 	
 	public Response httpPost(String url, List<NameValuePair> params);
 	/**

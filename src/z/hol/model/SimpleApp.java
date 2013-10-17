@@ -24,6 +24,10 @@ public class SimpleApp implements Serializable{
 	private String appUrl;
 	private long appId;
 	
+	private String userData1;
+	private String userData2;
+	private String userData3;
+	
 	
 	public String getPackageName() {
 		return packageName;
@@ -84,6 +88,24 @@ public class SimpleApp implements Serializable{
 		return formatedSize;
 	}
 	
+	public String getUserData1() {
+		return userData1;
+	}
+	public void setUserData1(String data) {
+		this.userData1 = data;
+	}
+	public String getUserData2() {
+		return userData2;
+	}
+	public void setUserData2(String data) {
+		this.userData2 = data;
+	}
+	public String getUserData3() {
+		return userData3;
+	}
+	public void setUserData3(String data) {
+		this.userData3 = data;
+	}
 	@Override
 	public boolean equals(Object o) {
 		// TODO Auto-generated method stub

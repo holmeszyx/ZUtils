@@ -5,7 +5,7 @@ package z.hol.net.http;
  * @author holmes
  *
  */
-public interface HttpProgress {
+public interface HttpRunningStatus {
 
 	/**
 	 * Http开始执行
