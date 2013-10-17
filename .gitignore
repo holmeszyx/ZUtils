@@ -20,3 +20,4 @@ gen/
 local.properties
 /doc
 /ZUtils.jar
+/ZUtils-SimpleDownloader.jar

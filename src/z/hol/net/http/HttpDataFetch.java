@@ -49,7 +49,6 @@ import org.json.JSONException;
 
 import z.hol.net.http.entity.GzipDecompressingEntity;
 import z.hol.net.http.entity.JsonEntity;
-import android.content.Context;
 
 public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	
@@ -105,7 +104,7 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	
 	private static HashMap<String, String> sCommonHeader = null;
 
-	protected Context mContext;
+	//protected Context mContext;
 	private HttpClient httpClient;
 	private HashMap<String, String> mHeaders;
 	private boolean gzipEnable = true;
@@ -126,30 +125,29 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	 * @param autoshutdown 是否在完成一个请求后自动关闭连接
 	 */
 	public HttpDataFetch(boolean autoshutdown){
-		this(null, false, true, autoshutdown);
+		this(false, true, autoshutdown);
 	}
 	
-	public HttpDataFetch(Context context){
-		this(context, false);
-	}
+	//public HttpDataFetch(Context context){
+	//	this(context, false);
+	//}
 
-	public HttpDataFetch(Context context, boolean https){
-		this(context, https, true);
-	}
+	//public HttpDataFetch(boolean https){
+	//	this(https, true);
+	//}
 	
-	public HttpDataFetch(Context context, boolean https, boolean autoshutdown){
-		this(context, https, true, autoshutdown);
+	public HttpDataFetch(boolean https, boolean autoshutdown){
+		this(https, true, autoshutdown);
 	}
 	
 	/**
 	 * 生成一个Http请求器。
-	 * @param context
 	 * @param https 是否使用https
 	 * @param gzip	是否开启gzip
 	 * @param autoshutdown	是否完成一个请求后自动关闭连接
 	 */
-	public HttpDataFetch(Context context, boolean https, boolean gzip, boolean autoshutdown){
-		mContext = context;
+	public HttpDataFetch(boolean https, boolean gzip, boolean autoshutdown){
+		//mContext = context;
 		if (https){
 			httpClient = getNewHttpClient();
 		}else{
@@ -392,7 +390,7 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 		httpClient.getConnectionManager().shutdown();
 	}
 	
-	public static String getToken(Context context){
+	public static String getToken(){
 		String token = "";
 		return token;
 	}

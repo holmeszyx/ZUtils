@@ -11,7 +11,7 @@ import android.os.Message;
  * 
  * @author holmes
  */
-public abstract class HttpUIHandler extends Handler implements HttpProgress{
+public abstract class HttpUIHandler extends Handler implements HttpRunningStatus{
 	public static final int HTTP_START = 0x60000;
 	public static final int HTTP_END = 0x60001;
 	public static final int HTTP_ERROR = 0x60002;
