@@ -377,7 +377,35 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 		httpPostNoResponse(NetConst.UNKNOWN, url, params);
 	}
 	
-	private void autoShutdown(){
+	@Override
+    public Response httpPosJson(String url, String json) {
+        // TODO Auto-generated method stub
+        Response data = null;
+        HttpPost post = new HttpPost(url);
+        try {
+            insertAddedHeaders(post);
+            if (json != null){
+                HttpEntity entity = null;
+                entity = new JsonEntity(json, HTTP.UTF_8);
+                post.setEntity(entity);
+            }
+            HttpResponse response = httpClient.execute(post);
+            data = new Response(0, response);
+            
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        autoShutdown();
+        
+        return data;
+    }
+
+    private void autoShutdown(){
 		if (mAutoShutdown){
 			shutdown();
 		}

@@ -9,9 +9,12 @@ import java.util.concurrent.CountDownLatch;
 public class MultiThreadDownload {
 	public static final int DEFAULT_THREAD_COUNT = 3;
 
+	private static int sGetMethodLengthUsage = 0;
+
 	private int mThreadCount;
 	private String mUrl;
 	private String fileName;
+	
 	
 	public MultiThreadDownload(String url, int threadCount, String savedFile){
 		mUrl = url;
@@ -84,7 +87,15 @@ public class MultiThreadDownload {
 
 	public static long getUrlContentLength(String fileUrl, OnRedirectListener listener) throws IOException{
 		long length = -1;
-		length = getUrlContentLength(fileUrl, false, listener);
+		if (sGetMethodLengthUsage > 2){
+		    length = getUrlContentLength(fileUrl, false, listener);
+		}else{
+		    length = getUrlContentLength(fileUrl, true, listener);
+		    if (length == -1){
+		        length = getUrlContentLength(fileUrl, false, listener);
+		        sGetMethodLengthUsage ++;
+		    }
+		}
 		return length;
 	}
 	

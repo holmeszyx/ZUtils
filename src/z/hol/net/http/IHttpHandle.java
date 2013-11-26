@@ -31,7 +31,16 @@ public interface IHttpHandle {
 	
 	public Response httpPost(int type, String url, List<NameValuePair> params, boolean json);
 	
+	
 	public Response httpPost(String url, List<NameValuePair> params);
+
+	/**
+	 * Post json string with application/json content type
+	 * @param url
+	 * @param json
+	 * @return
+	 */
+	public Response httpPosJson(String url, String json);
 	/**
 	 * only post data to server with http by http post method
 	 * @param url http post url
