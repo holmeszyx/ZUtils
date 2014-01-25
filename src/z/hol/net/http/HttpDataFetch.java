@@ -126,6 +126,8 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	private boolean gzipEnable = true;
 	private boolean mAutoShutdown;
 	private boolean mIsIgnoreCommenHeaders = false;
+
+	private String mEncoding = null;
 	
 	/**
 	 * 生成一个http请求器,
@@ -182,6 +184,9 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 		mAutoShutdown = autoshutdown;
 	}
 	
+	public void setEncoding(String encoding){
+		mEncoding = encoding;
+	}
 	
 	
 	@Override
@@ -309,7 +314,7 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	
 	@Override
 	public Response httpGet(int type, String url, List<NameValuePair> params) {
-		String paramStr = toGetOperationParams(params);
+		String paramStr = toGetOperationParams(params, mEncoding);
 		return httpGet(type, url + paramStr);
 	}
 	
@@ -348,6 +353,12 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	public Response httpPost(int type, String url, List<NameValuePair> params,
 			boolean json) {
 		// TODO Auto-generated method stub
+		String encode;
+		if (mEncoding == null){
+			encode = HTTP.UTF_8;
+		}else{
+			encode = mEncoding;
+		}
 		Response data = null;
 		HttpPost post = new HttpPost(url);
 		try {
@@ -355,9 +366,9 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 			if (params != null){
 				HttpEntity entity = null;
 				if (json){
-					entity = new JsonEntity(params, HTTP.UTF_8);
+					entity = new JsonEntity(params, encode);
 				}else{
-					entity = new UrlEncodedFormEntity(params, HTTP.UTF_8);
+					entity = new UrlEncodedFormEntity(params, encode);
 				}
 				post.setEntity(entity);
 			}
@@ -495,11 +506,15 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	 * @param params
 	 * @return 返回URL参数，当params size为0时返回""
 	 */
-	public static String toGetOperationParams(List<NameValuePair> params){
+	public static String toGetOperationParams(List<NameValuePair> params, String encoding){
 		if (params.isEmpty()){
 			return "";
 		}
-		String paramStr = URLEncodedUtils.format(params, HTTP.UTF_8);
+		
+		if (encoding == null){
+			encoding = HTTP.UTF_8;
+		}
+		String paramStr = URLEncodedUtils.format(params, encoding);
 		return "?" + paramStr;
 	}
 	
