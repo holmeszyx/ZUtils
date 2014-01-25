@@ -36,6 +36,7 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.EntityEnclosingRequestWrapper;
 import org.apache.http.impl.conn.SingleClientConnManager;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
@@ -49,9 +50,11 @@ import org.json.JSONException;
 
 import z.hol.net.http.entity.GzipDecompressingEntity;
 import z.hol.net.http.entity.JsonEntity;
+import z.hol.net.http.entity.compress.GzipCompressingEntity;
 
 public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	
+    
 	public static final String HTTP_HEAD_SESSION_KEY = "Cookie";
 	public static final String HTTP_HEAD_SESSION_VALUE_HEAD = "sessionid=";
 	public static final String HTTP_HEAD_USER_AGENT_KEY = "User-Agent";
@@ -72,6 +75,19 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 			// TODO Auto-generated method stub
             if (!request.containsHeader("Accept-Encoding")) {
                 request.addHeader("Accept-Encoding", "gzip");
+//                if (request instanceof EntityEnclosingRequestWrapper){
+//                    EntityEnclosingRequestWrapper eerw = (EntityEnclosingRequestWrapper) request;
+//                    HttpEntity entity = eerw.getEntity();
+//                    if (entity != null){
+//                        eerw.setEntity(new GzipCompressingEntity(entity));
+//                    }
+//                }else if (request instanceof HttpPost){
+//                    HttpPost post = (HttpPost) request;
+//                    HttpEntity entity = post.getEntity();
+//                    if (entity != null){
+//                        post.setEntity(new GzipCompressingEntity(entity));
+//                    }
+//                }
             }
 		}
 	};
@@ -303,6 +319,32 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	}
 	
 	@Override
+    public Response httpPost(String url, HttpEntity entity) {
+        // TODO Auto-generated method stub
+        Response data = null;
+        HttpPost post = new HttpPost(url);
+        try {
+            insertAddedHeaders(post);
+            if (entity != null){
+                post.setEntity(entity);
+            }
+            HttpResponse response = httpClient.execute(post);
+            data = new Response(0, response);
+            
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        autoShutdown();
+        
+        return data;
+    }
+
+    @Override
 	public Response httpPost(int type, String url, List<NameValuePair> params,
 			boolean json) {
 		// TODO Auto-generated method stub
@@ -378,7 +420,7 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	}
 	
 	@Override
-    public Response httpPosJson(String url, String json) {
+    public Response httpPostJson(String url, String json) {
         // TODO Auto-generated method stub
         Response data = null;
         HttpPost post = new HttpPost(url);

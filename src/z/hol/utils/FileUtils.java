@@ -4,12 +4,14 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+import z.hol.utils.codec.DigestUtils;
 import android.os.Environment;
 import android.os.StatFs;
 import android.text.TextUtils;
@@ -283,4 +285,32 @@ public class FileUtils {
 		sizes[1] = free;
 		return sizes;
 	}
+    
+    /**
+     * 获取文件的MD5值
+     * @param f
+     * @return
+     */
+    public static String getFileMd5(File f){
+        if (f != null){
+            FileInputStream in = null;
+            try {
+                in = new FileInputStream(f);
+                return DigestUtils.md5Hex(in);
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } finally{
+                if (in != null){
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return null;
+    }
 }

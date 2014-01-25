@@ -2,6 +2,7 @@ package z.hol.net.http;
 
 import java.util.List;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 
 /**
@@ -33,6 +34,14 @@ public interface IHttpHandle {
 	
 	
 	public Response httpPost(String url, List<NameValuePair> params);
+	
+	/**
+	 * Post a entity
+	 * @param url
+	 * @param entity
+	 * @return
+	 */
+	public Response httpPost(String url, HttpEntity entity);
 
 	/**
 	 * Post json string with application/json content type
@@ -40,7 +49,7 @@ public interface IHttpHandle {
 	 * @param json
 	 * @return
 	 */
-	public Response httpPosJson(String url, String json);
+	public Response httpPostJson(String url, String json);
 	/**
 	 * only post data to server with http by http post method
 	 * @param url http post url
