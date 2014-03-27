@@ -156,6 +156,8 @@ public class SimpleFileStatusSaver implements FileStatusSaver{
 			SimpleFile file = task.getSimpeFile();
 			long size = c.getLong(2);
 			file.setSize(size);
+			// 防止redirct后, url信息没更新
+			file.setUrl(c.getString(1));
 			task.setStartPos(c.getLong(6));
 			task.setSize(size);
 			c.close();

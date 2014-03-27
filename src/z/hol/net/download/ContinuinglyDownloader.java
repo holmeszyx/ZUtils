@@ -362,7 +362,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	 */
 	private void saveFile(InputStream in) throws IOException{
 		CC cc = new CC();
-		byte[] buff = new byte[512];
+		byte[] buff = new byte[4096];
 		int readLen = getExpectedReadLen();
 		int len = 0;
 		cc.start();
