@@ -96,7 +96,7 @@ public class Foreground {
 	 * @param end 需要变色的文字结束位置
 	 * @param color 要改成的颜色
 	 */
-	private static void applyForeground(Spannable s, int start, int end, int color){
+	public static void applyForeground(Spannable s, int start, int end, int color){
 		ForegroundColorSpan foregroundColorSpan = new ForegroundColorSpan(color);
 		s.setSpan(foregroundColorSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 	} 
