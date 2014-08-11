@@ -6,6 +6,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.CountDownLatch;
 
+import z.hol.net.download.exception.HttpGetUrlLengthException;
+
 public class MultiThreadDownload {
 	public static final int DEFAULT_THREAD_COUNT = 3;
 
@@ -41,6 +43,9 @@ public class MultiThreadDownload {
 			length = getUrlContentLength(mUrl);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (HttpGetUrlLengthException e) {
+			// This is Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (length == -1){
@@ -81,19 +86,38 @@ public class MultiThreadDownload {
 	}
 	
 	
-	public static long getUrlContentLength(String fileUrl) throws IOException{
+	public static long getUrlContentLength(String fileUrl) throws IOException, HttpGetUrlLengthException{
 		return getUrlContentLength(fileUrl, null);
 	}
 
-	public static long getUrlContentLength(String fileUrl, OnRedirectListener listener) throws IOException{
+	public static long getUrlContentLength(String fileUrl, OnRedirectListener listener) throws IOException, HttpGetUrlLengthException{
 		long length = -1;
 		if (sGetMethodLengthUsage > 2){
 		    length = getUrlContentLength(fileUrl, false, listener);
 		}else{
-		    length = getUrlContentLength(fileUrl, true, listener);
+			boolean isThrowGetlengthException = false;
+			HttpGetUrlLengthException getLengthExcep = null;
+		    try {
+				length = getUrlContentLength(fileUrl, true, listener);
+			} catch (HttpGetUrlLengthException e) {
+				// This is Auto-generated catch block
+				isThrowGetlengthException = true;
+				getLengthExcep = e;
+			}
 		    if (length == -1){
-		        length = getUrlContentLength(fileUrl, false, listener);
+		        try {
+					length = getUrlContentLength(fileUrl, false, listener);
+					isThrowGetlengthException = false;	// 如果Get方法, 有效, 则不用再抛异常
+				} catch (HttpGetUrlLengthException e) {
+					// This is Auto-generated catch block
+					isThrowGetlengthException = true;
+					getLengthExcep = e;
+				}
 		        sGetMethodLengthUsage ++;
+		    }
+		    
+		    if (isThrowGetlengthException){
+		    	throw getLengthExcep;
 		    }
 		}
 		return length;
@@ -105,8 +129,9 @@ public class MultiThreadDownload {
 	 * 
 	 * @param fileUrl
 	 * @param methodHead 是否使用HEAD方法，否则为GET
+	 * @throws HttpGetUrlLengthException 
 	 */
-	public static long getUrlContentLength(String fileUrl, boolean methodHead, OnRedirectListener listener) throws IOException{
+	public static long getUrlContentLength(String fileUrl, boolean methodHead, OnRedirectListener listener) throws IOException, HttpGetUrlLengthException{
 		long length = -1;
 		URL url = new URL(fileUrl);
 
@@ -126,11 +151,16 @@ public class MultiThreadDownload {
 		conn.setReadTimeout(12000);
 		conn.connect();
 		
-		if (conn.getResponseCode() == 200){
+		boolean isThrowsHttpGetException = false;	// 是否抛服务器异常
+		int statusCode = conn.getResponseCode();
+		if (statusCode == 200){
 			length = conn.getContentLength();
 		}else{
-			System.out.println("http status code is " + conn.getResponseCode());
+			// 服务器异常
+			System.out.println("http status code is " + statusCode);
+			isThrowsHttpGetException = true;
 		}
+
 		String newUrl = conn.getURL().toString();
 		if (!newUrl.equals(url.toString())){
 			// 有重定向
@@ -139,6 +169,10 @@ public class MultiThreadDownload {
 			}
 		}
 		conn.disconnect();
+		
+		if (isThrowsHttpGetException){
+			throw new HttpGetUrlLengthException(statusCode, "http status code is " + statusCode);
+		}
 		return length;
 	}
 	

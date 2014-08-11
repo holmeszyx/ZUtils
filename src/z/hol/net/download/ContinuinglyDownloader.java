@@ -14,6 +14,7 @@ import java.util.concurrent.CountDownLatch;
 import z.hol.general.CC;
 import z.hol.general.ConcurrentCanceler;
 import z.hol.net.download.MultiThreadDownload.OnRedirectListener;
+import z.hol.net.download.exception.HttpGetUrlLengthException;
 
 
 /**
@@ -24,26 +25,55 @@ import z.hol.net.download.MultiThreadDownload.OnRedirectListener;
  *
  */
 public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
+	/** 暂时文件后缀 */
 	public static final String TEMP_FILE_EX_NAME = ".zdt";
+
+	/** SD卡没有 */
 	public static final int ERROR_CODE_SDCARD_NO_FOUND = 10404;
+	/** 下载的URL不正确 */
+	public static final int ERROR_CODE_DOWNLOAD_URL_INCORRECT = 10804;
+	/** 下载出错 */
+	public static final int ERROR_CODE_DOWNLOAD_ERROR = 10805;
+	/** 获取文件大小的服务状态码基础偏移 */
+	public static final int ERROR_CDOE_BASE_GET_FILE_SIZE_HTTP_OFFSET = 20000;
+	/** 获取文件大小的非服务器状态异常(超时等) */
+	public static final int ERROR_CODE_GET_FILE_SIZE_EXCEPTION = 10500;
+	
 	public static final int MAX_REAPEAT_TIMES = 3;
 	public static final int MAX_TRY_AGAIN_TIMES = 5;
 	
-	private boolean useTempFile = true;
-	private boolean autoTryAgain = true;
+	/** 是否使用临时文件后缀名 {@link #TEMP_FILE_EX_NAME} */
+	private boolean mUseTempFile = true;
+	/** 是否自动网络异常重试 */
+	private boolean mAutoTryAgain = true;
 	private int mMaxTryAgainTimes = MAX_TRY_AGAIN_TIMES;
+	/** 下载异常后尝试次数(网络异常) */
 	private int mAlreadyTryTimes = 0;
-	private long blockSize;
-	private long startPos;
+	/** 当前下载的数据块总大小 */
+	private long mBlockSize;
+	/** 当前下载的数据块起始位置 */
+	private long mStartPos;
 	// private long endPos;
-	private RandomAccessFile file;
-	private String filePath;
-	private String url;
-	private long maxRemain;
+
+	/** 保存文件的回调间隔计时器 */
+	private CC mSaveCC = new CC();
+	private RandomAccessFile mFile;
+	private String mFilePath;
+	private String mUrl;
+	/** 剩余需要下载的数据大小 */
+	private long mMaxRemain;
 	private int mThreadIndex;
+	
 	private CountDownLatch mCountDownLatch;
 	private ConcurrentCanceler mCanceler;
+	/** 获取文件大小出错次数 */
 	private int mErrorTimes = 0;
+	/** 
+	 * 获取文件大小出错的状态码 
+	 * (大于 {@value #ERROR_CDOE_BASE_GET_FILE_SIZE_HTTP_OFFSET} 的状态码,
+	 * 就为服务器返回的错误)
+	 */
+	private int mGetSizeErrorCode = ERROR_CODE_GET_FILE_SIZE_EXCEPTION;
 	private boolean mIsBlockComplete = false;
 	
     /**
@@ -52,18 +82,18 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
     private boolean mIsSaveRedirectUrl = true;
 	
 	public ContinuinglyDownloader(String url, long blockSize, long startPos, int threadIndex, String filePath){
-		this.url = url;
-		this.filePath = filePath;
+		this.mUrl = url;
+		this.mFilePath = filePath;
 		mThreadIndex = threadIndex;
 		initParams(blockSize, startPos);
-		System.out.println(threadIndex + " remain" + maxRemain);
+		System.out.println(threadIndex + " remain " + mMaxRemain);
 		mCanceler = new ConcurrentCanceler();
 	}
 	
 	private void initParams(long blockSize, long startPos){
-		this.startPos = startPos;
-		this.blockSize = blockSize;
-		maxRemain = this.blockSize * (mThreadIndex + 1) - startPos;
+		this.mStartPos = startPos;
+		this.mBlockSize = blockSize;
+		mMaxRemain = this.mBlockSize * (mThreadIndex + 1) - startPos;
 	}
 	
 	public void setSaveRedirectUrl(boolean save){
@@ -79,7 +109,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
     }
 	
 	public void useTempFile(boolean use){
-		useTempFile = use;
+		mUseTempFile = use;
 	}
 	
 	public void setCountDown(CountDownLatch countDownLatch){
@@ -87,7 +117,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	}
 	
 	public String getSaveFilePath(){
-		return filePath;
+		return mFilePath;
 	}
 	
 	/**
@@ -95,13 +125,13 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	 * @throws DowloadException
 	 */
 	private void initSavaFile() throws DowloadException{
-		File saveFile = new File(filePath);
+		File saveFile = new File(mFilePath);
 		File path = saveFile.getParentFile();
 		if (!path.exists()){
 			path.mkdirs();
 		}
-		String realSaveFile = filePath;
-		if (useTempFile){
+		String realSaveFile = mFilePath;
+		if (mUseTempFile){
 			realSaveFile = realSaveFile + TEMP_FILE_EX_NAME;
 			File realFile = new File(realSaveFile);
 			if (!realFile.exists()){
@@ -114,11 +144,11 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		path = null;
 		saveFile = null;
 		try {
-			file = new RandomAccessFile(realSaveFile, "rw");
-			file.seek(startPos);
+			mFile = new RandomAccessFile(realSaveFile, "rw");
+			mFile.seek(mStartPos);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
-			throw new DowloadException("save file " + filePath + " no found", e);
+			throw new DowloadException("save file " + mFilePath + " no found", e);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -129,17 +159,22 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	 * 当下载文件大小未知时，先获取文件大小
 	 */
 	private boolean prepareFileSize(){
-		if (startPos <= 0){
+		if (mStartPos <= 0){
 			try {
-				blockSize = MultiThreadDownload.getUrlContentLength(url, this);
+				mBlockSize = MultiThreadDownload.getUrlContentLength(mUrl, this);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return false;
+			} catch (HttpGetUrlLengthException e) {
+				// 服务器返回错误
+				e.printStackTrace();
+				mGetSizeErrorCode = ERROR_CDOE_BASE_GET_FILE_SIZE_HTTP_OFFSET + e.getHttpStatusCode();
+				return false;
 			}
-			if (blockSize != -1){
-				initParams(blockSize, 0);
-				onPerpareFileSizeDone(blockSize);
+			if (mBlockSize != -1){
+				initParams(mBlockSize, 0);
+				onPerpareFileSizeDone(mBlockSize);
 				return true;
 			}else{
 				return false;
@@ -152,7 +187,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	public void onRedirect(String originUrl, String newUrl) {
 		// TODO Auto-generated method stub
 		System.out.println("redi");
-		url = newUrl;
+		mUrl = newUrl;
 	}
 	
 	/**
@@ -167,14 +202,14 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	 * @return
 	 */
 	public int getBlockPercent(){
-		if (blockSize <= 0){
+		if (mBlockSize <= 0){
 			return 0;
 		}
-		long current = blockSize - maxRemain;
+		long current = mBlockSize - mMaxRemain;
 		if (current < 0){
 			current = 0;
 		}
-		return AbsDownloadManager.computePercent(blockSize, current);
+		return AbsDownloadManager.computePercent(mBlockSize, current);
 	}
 	
 	/**
@@ -190,21 +225,31 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		if (!prepareFileSize()){
 			mErrorTimes ++;
 			if (mErrorTimes > MAX_REAPEAT_TIMES){
-				onDownloadError(404);
+				onDownloadError(mGetSizeErrorCode);
 				return;
 			}
-			try {
-				System.out.println("get file size error. " + url);
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+
+			System.out.println("get file size error. " + mUrl);
+			
+			// 延迟3秒
+			for (int times = 0; times < 30; times ++){
+				if (isCanceled()){
+					onCancel();
+					return;
+				}
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// This is Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			startDownload();
 			return;
 		}
 		
 		mErrorTimes = 0;
+		mGetSizeErrorCode = ERROR_CODE_GET_FILE_SIZE_EXCEPTION;
 		
 		// System.out.println("init file");
 		try {
@@ -215,7 +260,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		}
 		// System.out.println("start download");
 		mIsBlockComplete = false;
-		onStart(startPos, maxRemain, blockSize);
+		onStart(mStartPos, mMaxRemain, mBlockSize);
 		doDownload();
 	}
 	
@@ -230,23 +275,23 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 				onCancel();
 				return;
 			}
-			if (isAleadyComplete(startPos, maxRemain, blockSize)){
+			if (isAleadyComplete(mStartPos, mMaxRemain, mBlockSize)){
 				restoreTryTimes();
 				mIsBlockComplete = true;
 				return;
 			}
-			if (file == null){
+			if (mFile == null){
 				onDownloadError(ERROR_CODE_SDCARD_NO_FOUND);
 				return;
 			}
-			URL httpUrl = new URL(url);
+			URL httpUrl = new URL(mUrl);
 			HttpURLConnection conn = (HttpURLConnection) httpUrl.openConnection();
 			fillHttpHeader(conn);
 			int responseCode = conn.getResponseCode();
 			if (responseCode == 206 || responseCode == 200){
 				// 不支持断点续传
 				if (responseCode == 200){
-					autoTryAgain = false;
+					mAutoTryAgain = false;
 					onDoNotSupportBreakpoint();
 				}
 				
@@ -266,11 +311,11 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			invokeTryAgainError(0);
+			invokeTryAgainError(ERROR_CODE_DOWNLOAD_URL_INCORRECT);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			invokeTryAgainError(0);
+			invokeTryAgainError(ERROR_CODE_DOWNLOAD_ERROR);
 		}finally{
 			if (in != null){
 				try {
@@ -282,11 +327,11 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 			}
 			if (!isNeedTryAgain()){
 				try {
-					if (file != null){
+					if (mFile != null){
 						// the file will be null
 						// when sdcard no found
 						// 当没有sd卡时，file可能为null
-						file.close();
+						mFile.close();
 					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
@@ -302,12 +347,21 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		}
 		
 		if (isNeedTryAgain()){
-			System.out.println("try reconnect for download," + url);
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			System.out.println("try reconnect for download," + mUrl);
+			// 延迟5秒
+			for (int times = 0; times < 50; times ++){
+				if (isCanceled()){
+					restoreTryTimes();
+					onCancel();
+					return;
+				}
+				
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// This is Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			doDownload();
 		}
@@ -317,9 +371,9 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	 * 当下载完成后，恢复临时文件
 	 */
 	private void restoreTempFile(){
-		if (useTempFile){
-			File realSaveFile = new File(filePath + TEMP_FILE_EX_NAME);
-			File originFile = new File(filePath);
+		if (mUseTempFile){
+			File realSaveFile = new File(mFilePath + TEMP_FILE_EX_NAME);
+			File originFile = new File(mFilePath);
 			if (realSaveFile.exists()){
 				if (originFile.exists()){
 					originFile.delete();
@@ -355,7 +409,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	 * @param errorCode
 	 */
 	private void invokeTryAgainError(int errorCode){
-		if (autoTryAgain){
+		if (mAutoTryAgain){
 			mAlreadyTryTimes ++;
 			if (mAlreadyTryTimes > mMaxTryAgainTimes){
 				onDownloadError(errorCode);
@@ -378,22 +432,21 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	 * 保存下载的内容
 	 */
 	private void saveFile(InputStream in) throws IOException{
-		CC cc = new CC();
 		byte[] buff = new byte[4096];
 		int readLen = getExpectedReadLen();
 		int len = 0;
-		cc.start();
+		mSaveCC.start();
 		while ((len = in.read(buff, 0, readLen)) != -1){
 			restoreTryTimes();
-			file.write(buff, 0, len);
-			maxRemain -= len;
-			startPos += len;
+			mFile.write(buff, 0, len);
+			mMaxRemain -= len;
+			mStartPos += len;
 			readLen = getExpectedReadLen();
-			cc.end();
-			if (cc.cost() > CC.SECEND){
+			mSaveCC.end();
+			if (mSaveCC.cost() > CC.SECEND){
 				// 大于1秒
-				saveBreakpoint(startPos, maxRemain, blockSize);
-				cc.start();
+				saveBreakpoint(mStartPos, mMaxRemain, mBlockSize);
+				mSaveCC.start();
 			}
 			if (isCanceled()){
 				break;
@@ -403,7 +456,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 			}
 		}
 		//块下载完成
-		saveBreakpoint(startPos, maxRemain, blockSize);
+		saveBreakpoint(mStartPos, mMaxRemain, mBlockSize);
 		if (isCanceled()){
 			onCancel();
 		}
@@ -424,7 +477,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	 * 获取期望的剩余下载量
 	 */
 	private int getExpectedReadLen(){
-		return (maxRemain > 512) ? 512 : (int) maxRemain;
+		return (mMaxRemain > 512) ? 512 : (int) mMaxRemain;
 	}
 	
 	/**
@@ -434,9 +487,9 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		conn.setRequestMethod("GET");
 		conn.setRequestProperty("Accept", "image/gif, image/jpeg, image/pjpeg, image/pjpeg, application/x-shockwave-flash, application/xaml+xml, application/vnd.ms-xpsdocument, application/x-ms-xbap, application/x-ms-application, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*");
 		conn.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.6,en;q=0.4");
-		conn.setRequestProperty("Referer", getReferer(url));
+		conn.setRequestProperty("Referer", getReferer(mUrl));
 		conn.setRequestProperty("Charset", "UTF-8");
-		conn.setRequestProperty("Range", "bytes=" + startPos + "-");
+		conn.setRequestProperty("Range", "bytes=" + mStartPos + "-");
 		conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.168 Safari/535.19");
 		conn.setRequestProperty("Connection", "Keep-Alive");
 		conn.setConnectTimeout(40000);
@@ -457,10 +510,10 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	 * 不支持断电续传
 	 */
 	protected void onDoNotSupportBreakpoint(){
-		initParams(blockSize, 0);
+		initParams(mBlockSize, 0);
 		try {
-			file.setLength(maxRemain);
-			file.seek(0);
+			mFile.setLength(mMaxRemain);
+			mFile.seek(0);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
