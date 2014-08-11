@@ -29,7 +29,7 @@ public class FileDownloadTask implements FileTask, DownloadListener{
 	/**
 	 * 记录重定向的URL
 	 */
-	private boolean mIsSaveRedirectUrl = false;
+	private boolean mIsSaveRedirectUrl = true;
 	
 	public FileDownloadTask(SimpleFile file, String savePath, long startPos, FileStatusSaver statusSaver, DownloadListener listener) {
 		// TODO Auto-generated constructor stub

@@ -49,7 +49,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
     /**
      * 记录重定向的URL
      */
-    private boolean mIsSaveRedirectUrl = false;
+    private boolean mIsSaveRedirectUrl = true;
 	
 	public ContinuinglyDownloader(String url, long blockSize, long startPos, int threadIndex, String filePath){
 		this.url = url;
