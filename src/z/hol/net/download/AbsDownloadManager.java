@@ -104,6 +104,12 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	private int mMaxRunning = DEFAULT_MAX_RUNNING;
 	private DownloadTaskListener mDownloadTaskListener;
 	private List<DownloadUIHandler> mDownloadUIHandlerList;
+
+	/**
+	 * 是否记录跳转地址
+	 */
+	private boolean mIsSaveRedirectUrl = true;
+	
 	
 	public AbsDownloadManager(){
 		mTaskMap = new ConcurrentHashMap<Long, AbsDownloadManager.Task>();
@@ -535,6 +541,33 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		List<Task> tasks = new ArrayList<AbsDownloadManager.Task>(size);
 		tasks.addAll(mTaskMap.values());
 		return tasks;
+	}
+	
+	/**
+	 * 设置记录跳转地址
+	 * @param save
+	 */
+	public void setSaveRedirectUrl(boolean save){
+	    if (mIsSaveRedirectUrl != save){
+	        mIsSaveRedirectUrl = save;
+	        onSaveRedirectUrlStateChanged(save);
+	    }
+	}
+	
+	/**
+	 * 保存重定向状态改变了
+	 * @param newSaveState
+	 */
+	protected void onSaveRedirectUrlStateChanged(boolean newSaveState){
+	    
+	}
+	
+	/**
+	 * 是否记录跳转地址
+	 * @return
+	 */
+	public boolean isSaveRedirectUrl(){
+	    return mIsSaveRedirectUrl;
 	}
 	
 	private void invokeDownloadAdd(long id){

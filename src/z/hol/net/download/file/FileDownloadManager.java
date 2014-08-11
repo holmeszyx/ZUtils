@@ -29,6 +29,7 @@ public class FileDownloadManager extends AbsDownloadManager{
 	private final static byte[] sLock = new byte[0];
 	private ConcurrentHashMap<Long, Long> mSubIdToTaskMap = new ConcurrentHashMap<Long, Long>();
 	
+	
 	private FileDownloadManager(Context context){
 		super();
 		mContext = context;
@@ -56,6 +57,18 @@ public class FileDownloadManager extends AbsDownloadManager{
 		return mStatusSaver;
 	}
 	
+	@Override
+	protected void onSaveRedirectUrlStateChanged(boolean newSaveState) {
+	    // It is Auto-generated method stub
+        List<Task> allTask = getTasks();
+        if (allTask != null){
+            for(Task task : allTask){
+                FileDownloadTask ft = (FileDownloadTask) task;
+                ft.setSaveRedirectUrl(newSaveState);
+            }
+        }
+	}
+	
 	public boolean addTask(SimpleFile file){
 		return addTask(file, true);
 	}
@@ -64,6 +77,7 @@ public class FileDownloadManager extends AbsDownloadManager{
 		String savePath = file.getFileSavePath();
 		FileDownloadTask task = new FileDownloadTask(file, savePath, -1, mStatusSaver, this);
 		task.setTaskId(getTaskIdWithSubId(file.getSubId(), file.getType()));
+		task.setSaveRedirectUrl(isSaveRedirectUrl());
 		if (!hasTask(task)){
 			//mStatusSaver.addDownload(task.getSimpeFile(), task.getFileSavePath());
 			task.setTaskId(obtainTaskId());
@@ -139,6 +153,7 @@ public class FileDownloadManager extends AbsDownloadManager{
 		long lastId = 0;
 		for (int i = 0; i < tasks.size(); i ++){
 			FileDownloadTask task = tasks.get(i);
+			task.setSaveRedirectUrl(isSaveRedirectUrl());
 			if (task.getTaskId() > lastId){
 				lastId = task.getTaskId();
 			}
