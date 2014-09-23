@@ -82,7 +82,14 @@ public class Utils {
     @SuppressLint("NewApi")
     public static File getExternalCacheDir(Context context) {
         if (hasExternalCacheDir()) {
-            return context.getExternalCacheDir();
+        	File cacheDir;
+			try {
+				cacheDir = context.getExternalCacheDir();
+				return cacheDir;
+			} catch (Exception e) {
+				// This is Auto-generated catch block
+				e.printStackTrace();
+			} 
         }
 
         // Before Froyo we need to construct the external cache dir ourselves
