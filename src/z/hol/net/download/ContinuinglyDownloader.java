@@ -144,7 +144,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	private boolean prepareFileSize(){
 		if (mStartPos <= 0){
 			try {
-				mBlockSize = MultiThreadDownload.getUrlContentLength(mUrl, this);
+				mBlockSize = MultiThreadDownload.getUrlContentLength(mUrl, false, this);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
