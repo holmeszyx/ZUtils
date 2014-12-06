@@ -397,39 +397,14 @@ public class FileUtilsEx {
     }
     
     /**
-     * Get Directory Size
+     * 获取文件夹的大小
      * @param dir
      * @param folderSize folder size, if only blank folder
      * @return
      * @throws IOException 
      */
     public static long getDirectorySize(File directory, long folderSize) throws IOException {
-    	if (folderSize < 0l){
-    		folderSize = 0l;
-    	}
-    	
-    	long total = 0l;
-    	
-        if (!directory.exists()) {
-            String message = directory + " does not exist";
-            throw new IllegalArgumentException(message);
-        }
-
-        if (!directory.isDirectory()) {
-            String message = directory + " is not a directory";
-            throw new IllegalArgumentException(message);
-        }
-
-        File[] files = directory.listFiles();
-        if (files == null) {  // null if security restricted
-            throw new IOException("Failed to list contents of " + directory);
-        }
-
-        for (File file : files) {
-        	total += getFileSize(file);
-        }
-        
-        return total > 0l ? total : folderSize;
+    	return sizeOfDirectory(directory);
     }
     
     /**
@@ -439,15 +414,93 @@ public class FileUtilsEx {
      * @throws IOException 
      */
     public static long getFileSize(File file) throws IOException{
-        if (file.isDirectory()) {
-        	return getDirectorySize(file, 0l);
-        } else {
-            boolean filePresent = file.exists();
-            if (filePresent){
-            	return file.length();
-            }else{
-            	return 0l;
+    	return sizeOf(file);
+    }
+    
+    /**
+     * Counts the size of a directory recursively (sum of the length of all files).
+     * 
+     * @param directory
+     *            directory to inspect, must not be {@code null}
+     * @return size of directory in bytes, 0 if directory is security restricted, a negative number when the real total
+     *         is greater than {@link Long#MAX_VALUE}.
+     * @throws IOException	if file is not exist 
+     * @throws NullPointerException
+     *             if the directory is {@code null}
+     */
+    public static long sizeOfDirectory(File directory) throws IOException {
+        checkDirectory(directory);
+
+        final File[] files = directory.listFiles();
+        if (files == null) {  // null if security restricted
+            return 0L;
+        }
+        long size = 0;
+
+        for (final File file : files) {
+            try {
+                if (!isSymlink(file)) {
+                    size += sizeOf(file);
+                    if (size < 0) {
+                        break;
+                    }
+                }
+            } catch (IOException ioe) {
+                // Ignore exceptions caught when asking if a File is a symlink.
             }
         }
+
+        return size;
+    }
+    
+    /**
+     * Checks that the given {@code File} exists and is a directory.
+     * 
+     * @param directory The {@code File} to check.
+     * @throws IOException 
+     * if the given {@code File} does not exist or is not a directory.
+     */
+    private static void checkDirectory(File directory) throws IOException {
+        if (!directory.exists()) {
+            throw new IOException(directory + " does not exist");
+        }
+        if (!directory.isDirectory()) {
+            throw new IOException(directory + " is not a directory");
+        }
+    }
+    
+    //-----------------------------------------------------------------------
+    /**
+     * Returns the size of the specified file or directory. If the provided 
+     * {@link File} is a regular file, then the file's length is returned.
+     * If the argument is a directory, then the size of the directory is
+     * calculated recursively. If a directory or subdirectory is security 
+     * restricted, its size will not be included.
+     * 
+     * @param file the regular file or directory to return the size 
+     *        of (must not be {@code null}).
+     * 
+     * @return the length of the file, or recursive size of the directory, 
+     *         provided (in bytes).
+     * @throws IOException 
+     * if the file does not exist.
+     * 
+     * @throws NullPointerException if the file is {@code null}
+     *         
+     * @since 2.0
+     */
+    public static long sizeOf(File file) throws IOException {
+
+        if (!file.exists()) {
+            String message = file + " does not exist";
+            throw new IOException(message);
+        }
+
+        if (file.isDirectory()) {
+            return sizeOfDirectory(file);
+        } else {
+            return file.length();
+        }
+
     }
 }

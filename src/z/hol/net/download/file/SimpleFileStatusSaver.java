@@ -65,7 +65,7 @@ public class SimpleFileStatusSaver implements FileStatusSaver{
 	@Override
 	public void endTransaction() {
 		// TODO Auto-generated method stub
-		mDb.enableWriteAheadLogging();
+		mDb.endTransaction();
 	}
 
 	@Override

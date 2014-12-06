@@ -36,8 +36,8 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.ExecutionContext;
+import org.apache.http.protocol.HttpContext;
 
 /**
  * Server-side interceptor to handle Gzip-encoded responses.
