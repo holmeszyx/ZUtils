@@ -1,6 +1,5 @@
 package z.hol.net.download.file;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -30,6 +29,7 @@ public class FileDownloadManager extends AbsDownloadManager{
 	private final static byte[] sLock = new byte[0];
 	private ConcurrentHashMap<Long, Long> mSubIdToTaskMap = new ConcurrentHashMap<Long, Long>();
 	
+	
 	private FileDownloadManager(Context context){
 		super();
 		mContext = context;
@@ -57,11 +57,18 @@ public class FileDownloadManager extends AbsDownloadManager{
 		return mStatusSaver;
 	}
 	
-	/**
-	 * 添加一个文件下载, 并自动开始
-	 * @param file
-	 * @return
-	 */
+	@Override
+	protected void onSaveRedirectUrlStateChanged(boolean newSaveState) {
+	    // It is Auto-generated method stub
+        List<Task> allTask = getTasks();
+        if (allTask != null){
+            for(Task task : allTask){
+                FileDownloadTask ft = (FileDownloadTask) task;
+                ft.setSaveRedirectUrl(newSaveState);
+            }
+        }
+	}
+	
 	public boolean addTask(SimpleFile file){
 		return addTask(file, true);
 	}
@@ -76,6 +83,7 @@ public class FileDownloadManager extends AbsDownloadManager{
 		String savePath = file.getFileSavePath();
 		FileDownloadTask task = new FileDownloadTask(file, savePath, -1, mStatusSaver, this);
 		task.setTaskId(getTaskIdWithSubId(file.getSubId(), file.getType()));
+		task.setSaveRedirectUrl(isSaveRedirectUrl());
 		if (!hasTask(task)){
 			//mStatusSaver.addDownload(task.getSimpeFile(), task.getFileSavePath());
 			task.setTaskId(obtainTaskId());
@@ -83,47 +91,6 @@ public class FileDownloadManager extends AbsDownloadManager{
 		}
 		//return super.addTask(task, autoStrat);
 		return addTask(task, autoStrat);
-	}
-	
-	/**
-	 * 添加一个已完成的任务.
-	 * 注：必须要谨慎对待，对于添加的任务，
-	 * 管理器，不会做有效性验证
-	 * @param file
-	 * @return true 添加成功, false 失败(可能文件不存在; 下载任务已存在)
-	 */
-	public boolean addCompleteTask(SimpleFile file){
-		String savePath = file.getFileSavePath();
-		File completedFile = new File(savePath);
-		if (!completedFile.exists()){
-			// 文件不存在
-			return false;
-		}
-		final long fileSize = completedFile.length();
-		FileDownloadTask task = new FileDownloadTask(file, savePath, -1, mStatusSaver, this);
-		// 先尝试匹配下载task id
-		task.setTaskId(getTaskIdWithSubId(file.getSubId(), file.getType()));
-		if (!hasTask(task)){
-			// 无匹配， 则生成一个id
-			task.setTaskId(obtainTaskId());
-			mStatusSaver.addTask(task.getSimpeFile(), task.getFileSavePath());
-			long taskId = task.getTaskId();
-			// 修改task的状态
-			task.setStatus(Task.STATE_COMPLETE);
-			task.setSize(fileSize);
-			task.setStartPos(fileSize);
-			mStatusSaver.beginTransaction();
-			try {
-				mStatusSaver.changeTaskState(taskId, Task.STATE_COMPLETE);
-				mStatusSaver.updateDownloadPos(taskId, fileSize);
-				mStatusSaver.updateTaskSize(taskId, fileSize);
-				mStatusSaver.setTransactionSuccessful();
-			} finally{
-				mStatusSaver.endTransaction();
-			} 
-		}
-		addTask(task, false);
-		return false;
 	}
 	
 	@Override
@@ -192,6 +159,7 @@ public class FileDownloadManager extends AbsDownloadManager{
 		long lastId = 0;
 		for (int i = 0; i < tasks.size(); i ++){
 			FileDownloadTask task = tasks.get(i);
+			task.setSaveRedirectUrl(isSaveRedirectUrl());
 			if (task.getTaskId() > lastId){
 				lastId = task.getTaskId();
 			}

@@ -76,6 +76,11 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	private int mGetSizeErrorCode = ERROR_CODE_GET_FILE_SIZE_EXCEPTION;
 	private boolean mIsBlockComplete = false;
 	
+    /**
+     * 记录重定向的URL
+     */
+    private boolean mIsSaveRedirectUrl = true;
+	
 	public ContinuinglyDownloader(String url, long blockSize, long startPos, int threadIndex, String filePath){
 		this.mUrl = url;
 		this.mFilePath = filePath;
@@ -90,6 +95,18 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		this.mBlockSize = blockSize;
 		mMaxRemain = this.mBlockSize * (mThreadIndex + 1) - startPos;
 	}
+	
+	public void setSaveRedirectUrl(boolean save){
+        mIsSaveRedirectUrl = save; 
+    }
+    
+    /**
+     * 是否是记录重定向地址
+     * @return
+     */
+    public boolean isSaveRedirectUrl(){
+        return mIsSaveRedirectUrl;
+    }
 	
 	public void useTempFile(boolean use){
 		mUseTempFile = use;

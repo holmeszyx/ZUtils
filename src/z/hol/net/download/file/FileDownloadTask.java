@@ -26,6 +26,11 @@ public class FileDownloadTask implements FileTask, DownloadListener{
 	
 	private boolean mIsNeedRedownload = false;	
 	
+	/**
+	 * 记录重定向的URL
+	 */
+	private boolean mIsSaveRedirectUrl = true;
+	
 	public FileDownloadTask(SimpleFile file, String savePath, long startPos, FileStatusSaver statusSaver, DownloadListener listener) {
 		// TODO Auto-generated constructor stub
 		mFile = file;
@@ -34,6 +39,18 @@ public class FileDownloadTask implements FileTask, DownloadListener{
 		mListener = listener;
 		mStartPos = startPos;
 		file.setFileSavePath(mSavePath);
+	}
+	
+	public void setSaveRedirectUrl(boolean save){
+	    mIsSaveRedirectUrl = save; 
+	}
+	
+	/**
+	 * 是否是记录重定向地址
+	 * @return
+	 */
+	public boolean isSaveRedirectUrl(){
+	    return mIsSaveRedirectUrl;
 	}
 	
 	public long getSubType(){
@@ -100,6 +117,7 @@ public class FileDownloadTask implements FileTask, DownloadListener{
 	
 	private void prepareDownloader(){
 		mDownloader = new FileContinuinglyDownloader(mFile, mSavePath, mStartPos, mStatusSaver, this);
+		mDownloader.setSaveRedirectUrl(mIsSaveRedirectUrl);
 	}
 	
 	@Override
