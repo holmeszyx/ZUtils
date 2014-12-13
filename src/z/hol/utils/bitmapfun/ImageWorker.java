@@ -48,7 +48,6 @@ public abstract class ImageWorker {
     private boolean mExitTasksEarly = false;
 
     protected Context mContext;
-    protected ImageWorkerAdapter mImageWorkerAdapter;
 
     protected ImageWorker(Context context) {
         mContext = context;
@@ -94,45 +93,9 @@ public abstract class ImageWorker {
             if (bitmap != null && bitmap.isRecycled()){
             	bitmap = null;
             }
-            if (bitmap == null){
-            	bitmap = mImageCache.getBitmapFromDiskCache(data);
-            }
             return bitmap;
     	}
     	return null;
-    }
-    
-    /**
-     * 从存储卡上拿缓存的图片<br>
-     * 注： 图片可能很大
-     * @param data
-     * @return
-     */
-    protected Bitmap getImageFromDiskCache(String data){
-    	if (mImageCache != null){
-    		return mImageCache.getBitmapFromDiskCache(data);
-    	}
-    	return null;
-    }
-
-    /**
-     * Load an image specified from a set adapter into an ImageView (override
-     * {@link ImageWorker#processBitmap(Object)} to define the processing logic). A memory and disk
-     * cache will be used if an {@link ImageCache} has been set using
-     * {@link ImageWorker#setImageCache(ImageCache)}. If the image is found in the memory cache, it
-     * is set immediately, otherwise an {@link AsyncTask} will be created to asynchronously load the
-     * bitmap. {@link ImageWorker#setAdapter(ImageWorkerAdapter)} must be called before using this
-     * method.
-     *
-     * @param data The URL of the image to download.
-     * @param imageView The ImageView to bind the downloaded image to.
-     */
-    public void loadImage(int num, ImageView imageView) {
-        if (mImageWorkerAdapter != null) {
-            loadImage(mImageWorkerAdapter.getItem(num), imageView);
-        } else {
-            throw new NullPointerException("Data not set, must call setAdapter() first.");
-        }
     }
 
     /**
@@ -267,16 +230,6 @@ public abstract class ImageWorker {
             final String dataString = String.valueOf(data);
             Bitmap bitmap = null;
 
-            // If the image cache is available and this task has not been cancelled by another
-            // thread and the ImageView that was originally bound to this task is still bound back
-            // to this task and our "exit early" flag is not set then try and fetch the bitmap from
-            // the cache
-            if (mImageCache != null && !isCancelled() && getAttachedImageView() != null
-                    && !mExitTasksEarly) {
-               // bitmap = mImageCache.getBitmapFromDiskCache(dataString);
-                bitmap = getImageFromDiskCache(dataString);
-            }
-
             // If the bitmap was not found in the cache and this task has not been cancelled by
             // another thread and the ImageView that was originally bound to this task is still
             // bound back to this task and our "exit early" flag is not set, then call the main
@@ -376,24 +329,6 @@ public abstract class ImageWorker {
         } else {
             imageView.setImageBitmap(bitmap);
         }
-    }
-
-    /**
-     * Set the simple adapter which holds the backing data.
-     *
-     * @param adapter
-     */
-    public void setAdapter(ImageWorkerAdapter adapter) {
-        mImageWorkerAdapter = adapter;
-    }
-
-    /**
-     * Get the current adapter.
-     *
-     * @return
-     */
-    public ImageWorkerAdapter getAdapter() {
-        return mImageWorkerAdapter;
     }
 
     /**

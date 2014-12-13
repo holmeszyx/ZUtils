@@ -1,90 +1,22 @@
 package z.hol.net.download;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.concurrent.CountDownLatch;
 
 import z.hol.net.download.exception.HttpGetUrlLengthException;
 
+/**
+ * 多线程下载。
+ * 未完成。现在只是当下个工具类用
+ * @author holmes
+ *
+ */
 public class MultiThreadDownload {
 	public static final int DEFAULT_THREAD_COUNT = 3;
 
 	private static int sGetMethodLengthUsage = 0;
 
-	private int mThreadCount;
-	private String mUrl;
-	private String fileName;
-	
-	
-	public MultiThreadDownload(String url, int threadCount, String savedFile){
-		mUrl = url;
-		mThreadCount = threadCount;
-		this.fileName = savedFile;
-	}
-	
-	public MultiThreadDownload(String url, int threadCount){
-		this(url, threadCount, null);
-	}
-	
-	public MultiThreadDownload(String url){
-		this(url, DEFAULT_THREAD_COUNT);
-	}
-	
-	public void startDownload(){
-		long[] blocks = new long[mThreadCount];
-		long length = -1;
-		try {
-			if (fileName == null || fileName.trim().length() == 0){
-				fileName = mUrl;
-				scaleFileName();
-			}
-			length = getUrlContentLength(mUrl);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (HttpGetUrlLengthException e) {
-			// This is Auto-generated catch block
-			e.printStackTrace();
-		}
-		if (length == -1){
-			return;
-		}
-		computeBlock(length, blocks, mThreadCount);
-		File saveFile = new File(fileName);
-		if (!saveFile.exists()){
-			try {
-				saveFile.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
-		CountDownLatch countDownLatch = new CountDownLatch(3);
-		for (int i = 0; i < mThreadCount; i ++){
-			long normalBlock = blocks[0];
-			long startPos = normalBlock * i;
-			System.out.println(i + " startPos is " + startPos);
-			ContinuinglyDownloader fileContinuingly = new ContinuinglyDownloader(mUrl, blocks[i], startPos, i, fileName);
-			fileContinuingly.setCountDown(countDownLatch);
-			startThread(fileContinuingly);
-		}
-		try {
-			countDownLatch.await();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println("文件下载完成");
-		
-	}
-	
-	private void startThread(Runnable run){
-		new Thread(run).start();
-	}
-	
 	
 	public static long getUrlContentLength(String fileUrl) throws IOException, HttpGetUrlLengthException{
 		return getUrlContentLength(fileUrl, null);
@@ -176,23 +108,6 @@ public class MultiThreadDownload {
 		return length;
 	}
 	
-	private void scaleFileName(){
-		int pos = fileName.lastIndexOf("/");
-		String name = fileName.substring(pos + 1);
-		fileName = name;
-	}
-	
-	public static void computeBlock(long total, long[] blocks, int blockCount){
-		if (blockCount != blocks.length){
-			throw new IllegalArgumentException("Block count not equle blocks length.");
-		}
-		for (int i = 0; i < blockCount; i ++){
-			blocks[i] = total / blockCount;
-			if (i == blockCount - 1){
-				blocks[i] += total % blockCount;
-			}
-		}
-	}
 	
 	/**
 	 * 跳转监听

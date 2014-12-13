@@ -28,7 +28,6 @@ public class AppImageWorker extends ImageWorker{
 		super(context);
 		// TODO Auto-generated constructor stub
 		ImageCacheParams cacheParams = new ImageCacheParams("APK");
-		cacheParams.diskCacheEnabled = false;
 		cacheParams.memCacheSize = 1024 * 1024 * 1;	// 1MB
 		ImageCache cache = new ImageCache(mContext, cacheParams);
 		setImageCache(cache);
@@ -85,7 +84,7 @@ public class AppImageWorker extends ImageWorker{
             try {
                 return appInfo.loadIcon(pm);
             } catch (OutOfMemoryError e) {
-                Log.e("ApkIconLoader", e.toString());
+                Log.e("ApkImageWorker", e.toString());
             }
         }
         return null;

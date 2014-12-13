@@ -2,9 +2,6 @@ package z.hol.model;
 
 import java.io.Serializable;
 
-import z.hol.utils.file.FileUtils;
-import android.text.TextUtils;
-
 /**
  * 被下载的文件的基本信息,
  * 文件的id, size, 下载url, name
@@ -68,9 +65,6 @@ public abstract class AbsDownloadedFile implements Serializable{
 		this.size = size;
 	}
 	public String getFormatedSize() {
-		if (TextUtils.isEmpty(formatedSize)){
-			formatedSize = FileUtils.formatFileSize(size);
-		}
 		return formatedSize;
 	}
 	public void setFormatedSize(String formatedSize) {
