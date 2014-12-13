@@ -1,4 +1,4 @@
-package z.hol.utils;
+package z.hol.utils.file;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

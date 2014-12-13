@@ -29,9 +29,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.WeakHashMap;
 
 import z.hol.utils.BuildConfig;
-import z.hol.utils.WeakCache;
 import z.hol.utils.codec.DigestUtils;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -333,7 +333,7 @@ public class DiskLruCache {
         return null;
     }
     
-    private static WeakCache<String, String> mEncodedKeyCache = new WeakCache<String, String>();
+    private static WeakHashMap<String, String> mEncodedKeyCache = new WeakHashMap<String, String>();
     
     /**
      * 计算Key的MD5值

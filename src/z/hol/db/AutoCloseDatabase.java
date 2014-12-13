@@ -1,7 +1,11 @@
 package z.hol.db;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
+import z.hol.utils.ThreadUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
+import android.os.Looper;
 
 /**
  * 自动延迟关闭的数据库
@@ -10,9 +14,9 @@ import android.os.Handler;
  */
 public abstract class AutoCloseDatabase implements DatabaseHandler{
     /**
-     * 默认延迟2分钟
+     * 默认延迟10分钟
      */
-    public static final long DEFAULT_DELAY = 2 * 60 * 1000l;
+    public static final long DEFAULT_DELAY = 10 * 60 * 1000l;
     
     /**
      * 延迟
@@ -20,6 +24,12 @@ public abstract class AutoCloseDatabase implements DatabaseHandler{
     final private long mDelay;
     private Handler mHandler;
     private CloseRunnable mCloseRunnable;
+    
+    /** close的标识，解决在多线程操作下，
+     * db 被同时关闭的问题。
+     * 当这个值为0的时候才能关闭数据库
+     */
+    private AtomicInteger mCloseRefer = new AtomicInteger(0);
     
     public AutoCloseDatabase(long delay, Handler handler){
         if (handler == null){
@@ -32,16 +42,30 @@ public abstract class AutoCloseDatabase implements DatabaseHandler{
     
     public AutoCloseDatabase(long delay){
         mDelay = delay;
-        mHandler = new Handler();
+        // 防止在非UI线程创建一个handler
+        Looper looper = ThreadUtils.getSingleHandlerThread().getLooper();
+        if (looper != null){
+        	mHandler = new Handler(looper);
+        }else{
+        	mHandler = new Handler(Looper.getMainLooper());
+        }
         mCloseRunnable = new CloseRunnable(this);
     }
     
     /**
      * 延迟关闭数据库
      */
-    public void delayClose(){
+    public synchronized void delayClose(){
+    	mCloseRefer.incrementAndGet();	// close 1
         mHandler.removeCallbacks(mCloseRunnable);
         mHandler.postDelayed(mCloseRunnable, mDelay);
+        mCloseRefer.decrementAndGet();	// close 0
+    }
+    
+    @Override
+    public synchronized void closeDb() {
+    	// This is Auto-generated method stub
+    	
     }
     
     /**
@@ -67,7 +91,7 @@ public abstract class AutoCloseDatabase implements DatabaseHandler{
      * @return 如果 {@link #isDatabaseReadable()} 返回false, 则会调用 {@link #getReadableDb()}.
      *          返回 true, 调用 {@link #getCurrentDb()}
      */
-    public SQLiteDatabase ensureReadableDb(){
+    public synchronized SQLiteDatabase ensureReadableDb(){
         delayClose();
         if (!isDatabaseReadable()){
             return getReadableDb();
@@ -80,7 +104,7 @@ public abstract class AutoCloseDatabase implements DatabaseHandler{
      * @return 如果 {@link #isDatabaseWriteable()} 返回false, 则会调用 {@link #getWriteableDb()}.
      *          返回 true, 调用 {@link #getCurrentDb()}
      */
-    public SQLiteDatabase ensureWriteableDb(){
+    public synchronized SQLiteDatabase ensureWriteableDb(){
         delayClose();
         if (!isDatabaseWriteable()){
             return getWriteableDb();
@@ -105,7 +129,7 @@ public abstract class AutoCloseDatabase implements DatabaseHandler{
         public void run() {
             // It is Auto-generated method stub
             if (mDb != null){
-                if (mDb.isOpened()){
+                if (mDb.mCloseRefer.get() == 0 && mDb.isOpened()){
                     mDb.closeDb();
                 }
             }

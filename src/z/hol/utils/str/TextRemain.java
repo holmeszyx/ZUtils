@@ -1,4 +1,4 @@
-package z.hol.utils;
+package z.hol.utils.str;
 
 /**
  * 字数剩余处理类

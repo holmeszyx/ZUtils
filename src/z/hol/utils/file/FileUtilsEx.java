@@ -1,4 +1,4 @@
-package z.hol.utils;
+package z.hol.utils.file;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -309,23 +309,23 @@ public class FileUtilsEx {
         if (file == null) {
             throw new NullPointerException("File must not be null");
         }
-//        if (FilenameUtils.isSystemWindows()) {
-//            return false;
-//        }
-//        File fileInCanonicalDir = null;
-//        if (file.getParent() == null) {
-//            fileInCanonicalDir = file;
-//        } else {
-//            File canonicalDir = file.getParentFile().getCanonicalFile();
-//            fileInCanonicalDir = new File(canonicalDir, file.getName());
-//        }
-//        
-//        if (fileInCanonicalDir.getCanonicalFile().equals(fileInCanonicalDir.getAbsoluteFile())) {
-//            return false;
-//        } else {
-//            return true;
-//        }
-        return false;
+        // 不可能是win
+        //if (FilenameUtils.isSystemWindows()) {
+        //    return false;
+        //}
+        File fileInCanonicalDir = null;
+        if (file.getParent() == null) {
+            fileInCanonicalDir = file;
+        } else {
+            File canonicalDir = file.getParentFile().getCanonicalFile();
+            fileInCanonicalDir = new File(canonicalDir, file.getName());
+        }
+        
+        if (fileInCanonicalDir.getCanonicalFile().equals(fileInCanonicalDir.getAbsoluteFile())) {
+            return false;
+        } else {
+            return true;
+        }
     }    
     
     /**

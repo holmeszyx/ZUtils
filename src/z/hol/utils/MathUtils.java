@@ -11,10 +11,11 @@ public class MathUtils {
 	 */
 	public static int constrain(int num, int min, int max){
 		int i = num;
-		if (i < min)
+		if (i < min){
 			i = min;
-		if (i > max)
+		}else if (i > max){
 			i = max;
+		}
 		return i;
 	}
 }

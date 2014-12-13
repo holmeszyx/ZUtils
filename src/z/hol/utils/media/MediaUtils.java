@@ -1,4 +1,4 @@
-package z.hol.utils;
+package z.hol.utils.media;
 
 import android.content.Context;
 import android.media.MediaScannerConnection;

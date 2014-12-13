@@ -2,11 +2,34 @@ package z.hol.utils;
 
 import android.os.AsyncTask;
 import android.os.AsyncTask.Status;
+import android.os.HandlerThread;
+import android.os.Process;
 
 public class ThreadUtils {
     
     public static final boolean IS_OLD_ASYNC_TASK = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB;
 
+    /** 
+     * 一个带looper的，后台线程。
+     * 主要是提供给handler用在一些性能，
+     * 级别不高的地方
+     * 
+     */
+    private static final HandlerThread sInternalWorkHandler = new HandlerThread("workHandler", Process.THREAD_PRIORITY_BACKGROUND);
+    static{
+    	sInternalWorkHandler.start();
+    }
+    
+    /**
+     * 获取一个全局的，后台使用的HandlerThread.
+     * 主要是提供给handler用在一些性能，
+     * 级别不高的地方
+     * @return
+     */
+    public static HandlerThread getSingleHandlerThread(){
+    	return sInternalWorkHandler;
+    }
+    
 	/**
 	 * 如果AsyncTask在运行的话，则取消一个AsyncTask
 	 * @param task
@@ -33,8 +56,7 @@ public class ThreadUtils {
 	 * 让AsyncTask在多线程中执行
 	 * @param task
 	 */
-    //@SuppressWarnings("unchecked")
-    public static void compatAsyncTaskExecute(AsyncTask<Void, ?, ?> task){
+	public static void compatAsyncTaskExecute(AsyncTask<Void, ?, ?> task){
 	    if (IS_OLD_ASYNC_TASK){
 	        task.execute();
 	    }else{

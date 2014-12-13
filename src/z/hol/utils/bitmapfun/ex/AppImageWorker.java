@@ -2,11 +2,10 @@ package z.hol.utils.bitmapfun.ex;
 
 import java.io.File;
 
-import z.hol.utils.ImageUtil;
 import z.hol.utils.bitmapfun.ImageCache;
 import z.hol.utils.bitmapfun.ImageCache.ImageCacheParams;
-import z.hol.utils.bitmapfun.ImageDownloaderEx;
 import z.hol.utils.bitmapfun.ImageWorker;
+import z.hol.utils.media.ImageUtil;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -16,6 +15,13 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
+/**
+ * 加载应用的图标用
+ * {@link #loadImage(Object, android.widget.ImageView)}，
+ * object可以是 {@link PackageInfo}, ResolveInfo, ApplicationInfo
+ * @author holmes
+ *
+ */
 public class AppImageWorker extends ImageWorker{
 
 	public AppImageWorker(Context context) {
@@ -23,7 +29,7 @@ public class AppImageWorker extends ImageWorker{
 		// TODO Auto-generated constructor stub
 		ImageCacheParams cacheParams = new ImageCacheParams("APK");
 		cacheParams.diskCacheEnabled = false;
-		cacheParams.memCacheSize = ImageDownloaderEx.MEM_CACHE_SIZE;
+		cacheParams.memCacheSize = 1024 * 1024 * 1;	// 1MB
 		ImageCache cache = new ImageCache(mContext, cacheParams);
 		setImageCache(cache);
 	}
