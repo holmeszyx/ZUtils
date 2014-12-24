@@ -288,6 +288,8 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 			HttpURLConnection conn = (HttpURLConnection) httpUrl.openConnection();
 			fillHttpHeader(conn);
 			int responseCode = conn.getResponseCode();
+			// 是否是服务器异常, 非 20X
+			boolean isServerError = false;
 			if (responseCode == 206 || responseCode == 200){
 				// 不支持断点续传
 				if (responseCode == 200){
@@ -303,10 +305,19 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 				}
 			}else{
 				System.out.println(mThreadIndex + " http status code is " + responseCode);
-				restoreTryTimes();
-				onDownloadError(conn.getResponseCode());
+				// 服务器异常的时候
+				// 防止重置计数器后，后面再抛异常
+				// 造成，无限递归,
+				// 把重置移到最后
+				//restoreTryTimes();
+				isServerError = true;
+				onDownloadError(responseCode);
 			}
 			conn.disconnect();
+			
+			if (isServerError){
+				restoreTryTimes();
+			}
 			
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
