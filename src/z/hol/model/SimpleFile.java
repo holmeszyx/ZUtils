@@ -4,6 +4,10 @@ import java.io.Serializable;
 
 /**
  * 子类重写 {@link #getFileSavePath()}
+ * 有data1 ~ data5 五个字符串的通用字段.
+ * 有long1 ~ long4 四个整形的通用字段.
+ * 通用字段会自动保存在数据库中。从下载管理里面拿出来的通用字段
+ * 不会丢失.
  * @author holmes
  *
  */
@@ -50,6 +54,11 @@ public class SimpleFile extends AbsDownloadedFile implements Serializable{
 		mStartPos = file.mStartPos;
 	}
 	
+	/**
+	 * 下载任务类型.
+	 * 一般与subId组成唯一性
+	 * @return
+	 */
 	public int getType(){
 		return mType;
 	}
@@ -58,6 +67,10 @@ public class SimpleFile extends AbsDownloadedFile implements Serializable{
 		mType = type;
 	}
 	
+	/**
+	 * 任务的添加时间
+	 * @return
+	 */
 	public long getAddTime(){
 		return mAddTime;
 	}
@@ -66,6 +79,10 @@ public class SimpleFile extends AbsDownloadedFile implements Serializable{
 		mAddTime = time;
 	}
 	
+	/**
+	 * 任务的完成时间
+	 * @return
+	 */
 	public long getDoneTime(){
 		return mDoneTime;
 	}
@@ -74,6 +91,10 @@ public class SimpleFile extends AbsDownloadedFile implements Serializable{
 		mDoneTime = time;
 	}
 	
+	/**
+	 * 任务下载开始断点
+	 * @param pos
+	 */
 	public void setStartPos(long pos){
 		mStartPos = pos;
 	}

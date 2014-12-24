@@ -18,7 +18,7 @@ public abstract class AbsDownloadedFile implements Serializable{
 	private long id;
 	private long mSub_id;
 	private long size;
-	private String formatedSize = null;
+	private String formattedSize = null;
 	private String url;
 	private String name;
 	
@@ -32,7 +32,7 @@ public abstract class AbsDownloadedFile implements Serializable{
 		id = file.id;
 		mSub_id = file.mSub_id;
 		size = file.size;
-		formatedSize = file.formatedSize;
+		formattedSize = file.formattedSize;
 		url = file.url;
 		name = file.name;
 		mSavePath = file.mSavePath;
@@ -46,10 +46,15 @@ public abstract class AbsDownloadedFile implements Serializable{
 	public long getId() {
 		return id;
 	}
+	
 	public void setId(long id) {
 		this.id = id;
 	}
 	
+	/**
+	 * 获取子id.一般配合 type.组成唯一性
+	 * @return
+	 */
 	public long getSubId(){
 		return mSub_id;
 	}
@@ -58,31 +63,57 @@ public abstract class AbsDownloadedFile implements Serializable{
 		this.mSub_id = id;
 	}
 	
+	/**
+	 * 下载的文件大小.
+	 * @return 在没有成功获取文件大小时，可能为0
+	 */
 	public long getSize() {
 		return size;
 	}
+	
 	public void setSize(long size) {
 		this.size = size;
 	}
-	public String getFormatedSize() {
-		return formatedSize;
+	
+	/**
+	 * 获取格式化后的文件大小
+	 * @return
+	 */
+	public String getFormattedSize() {
+		return formattedSize;
 	}
-	public void setFormatedSize(String formatedSize) {
-		this.formatedSize = formatedSize;
+	
+	public void setFormattedSize(String formatedSize) {
+		this.formattedSize = formatedSize;
 	}
+	
+	/**
+	 * 下载的url
+	 * @return
+	 */
 	public String getUrl() {
 		return url;
 	}
 	public void setUrl(String url) {
 		this.url = url;
 	}
+	
+	/**
+	 * 下载的任务名
+	 * @return
+	 */
 	public String getName() {
 		return name;
 	}
+
 	public void setName(String name) {
 		this.name = name;
 	}
 	
+	/**
+	 * 下载文件的存储路径
+	 * @param path
+	 */
 	public void setFileSavePath(String path){
 		mSavePath = path;
 	}

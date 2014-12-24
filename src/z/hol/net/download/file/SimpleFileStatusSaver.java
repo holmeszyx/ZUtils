@@ -78,7 +78,7 @@ public class SimpleFileStatusSaver implements FileStatusSaver{
 		values.put(File.STATE, Task.STATE_PAUSE);
 		values.put(File.NAME, file.getName());
 		values.put(File.LEN, file.getSize());
-		values.put(File.LEN_FORMATED, file.getFormatedSize());
+		values.put(File.LEN_FORMATED, file.getFormattedSize());
 
 		if (saveFile == null){
 			saveFile = file.getFileSavePath();
@@ -201,7 +201,7 @@ public class SimpleFileStatusSaver implements FileStatusSaver{
 				file.setUrl(c.getString(1));
 				long size = c.getLong(2);
 				file.setSize(size);
-				file.setFormatedSize(c.getString(3));
+				file.setFormattedSize(c.getString(3));
 				file.setName(c.getString(7));
 
 				file.setLong1(CursorUtils.getLong(c, 8));
