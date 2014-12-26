@@ -93,6 +93,13 @@ public interface FileStatusSaver extends DatabaseHandler{
 	public void changeTaskState(long id, int state);
 	
 	/**
+	 * 更新Task的完成时间
+	 * @param id
+	 * @param doneTime
+	 */
+	public void changeTaskDoneTime(long id, long doneTime);
+	
+	/**
 	 * 删除Task
 	 * @param id
 	 */

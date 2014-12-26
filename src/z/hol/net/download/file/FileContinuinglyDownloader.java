@@ -97,7 +97,15 @@ public class FileContinuinglyDownloader extends ContinuinglyDownloader{
 	protected void onBlockComplete() {
 		// TODO Auto-generated method stub
 		super.onBlockComplete();
-		mStatusSaver.changeTaskState(getDownloadId(), Task.STATE_COMPLETE);
+		mStatusSaver.beginTransaction();
+		try {
+			mStatusSaver.changeTaskState(getDownloadId(), Task.STATE_COMPLETE);
+			mStatusSaver.changeTaskDoneTime(getDownloadId(), System.currentTimeMillis());
+			mStatusSaver.setTransactionSuccessful();
+		} finally {
+			// This is Auto-generated catch block
+			mStatusSaver.endTransaction();
+		}
 		if (mListener != null){
 			mListener.onComplete(getDownloadId());
 		}

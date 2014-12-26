@@ -140,6 +140,13 @@ public class SimpleFileStatusSaver implements FileStatusSaver{
 		values.put(File.STATE, state);
 		mDb.update(SimpleStateSaverDatabaseHelper.TABLE_FILE_TASK, values, File._ID + "=" + id, null);	
 	}
+	
+	@Override
+	public void changeTaskDoneTime(long id, long doneTime) {
+		ContentValues values = new ContentValues();
+		values.put(File.DONE_TIME, doneTime);
+		mDb.update(SimpleStateSaverDatabaseHelper.TABLE_FILE_TASK, values, File._ID + "=" + id, null);	
+	}
 
 	@Override
 	public void removeTask(long id) {
