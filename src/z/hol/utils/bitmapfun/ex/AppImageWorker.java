@@ -53,17 +53,27 @@ public class AppImageWorker extends ImageWorker{
 	}
 	
 	public static Drawable getApkIcon(Context context, ResolveInfo pkgInfo){
-		PackageManager pm = context.getPackageManager();
-		if (pkgInfo != null){
-			return pkgInfo.loadIcon(pm);
+		try {
+			PackageManager pm = context.getPackageManager();
+			if (pkgInfo != null && pm != null){
+				return pkgInfo.loadIcon(pm);
+			}
+		} catch (Exception e) {
+			// This is Auto-generated catch block
+			e.printStackTrace();
 		}
 		return null;
 	}
 	
 	public static Drawable getApkIcon(Context context, ApplicationInfo appInfo){
-		PackageManager pm = context.getPackageManager();
-		if (appInfo != null){
-			return appInfo.loadIcon(pm);
+		try {
+			PackageManager pm = context.getPackageManager();
+			if (appInfo != null && pm != null){
+				return appInfo.loadIcon(pm);
+			}
+		} catch (Exception e) {
+			// This is Auto-generated catch block
+			e.printStackTrace();
 		}
 		return null;
 	}
@@ -75,6 +85,9 @@ public class AppImageWorker extends ImageWorker{
      */
     public static Drawable getApkIcon(Context context, String apkPath) {
         PackageManager pm = context.getPackageManager();
+        if (pm == null){
+        	return null;
+        }
         PackageInfo info = pm.getPackageArchiveInfo(apkPath,
                 PackageManager.GET_ACTIVITIES);
         if (info != null) {

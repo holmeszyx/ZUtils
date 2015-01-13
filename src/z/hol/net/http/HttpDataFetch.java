@@ -1,7 +1,6 @@
 package z.hol.net.http;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +20,6 @@ import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
@@ -45,7 +43,6 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
-import org.json.JSONException;
 
 import z.hol.net.http.entity.GzipDecompressingEntity;
 import z.hol.net.http.entity.JsonEntity;
@@ -296,12 +293,7 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 			HttpResponse response = httpClient.execute(get);
 			data = new Response(type, response);
 			
-		}catch (UnsupportedEncodingException e){
-			e.printStackTrace();
-		}
-		catch (ClientProtocolException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -334,11 +326,7 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
             HttpResponse response = httpClient.execute(post);
             data = new Response(0, response);
             
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         
@@ -373,13 +361,7 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 			HttpResponse response = httpClient.execute(post);
 			data = new Response(type, response);
 			
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		} catch (ClientProtocolException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -413,11 +395,7 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 				
 			}
 			
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		} catch (ClientProtocolException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		autoShutdown();
@@ -443,11 +421,7 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
             HttpResponse response = httpClient.execute(post);
             data = new Response(0, response);
             
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         
@@ -466,8 +440,14 @@ public class HttpDataFetch implements IHttpHandle, HttpHeaderAddible{
 	 * 关闭连接
 	 */
 	public void shutdown(){
-		httpClient.getConnectionManager().shutdown();
+		try {
+			httpClient.getConnectionManager().shutdown();
+		} catch (Exception e) {
+			// This is Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
+	
 	
 	public static String getToken(){
 		String token = "";

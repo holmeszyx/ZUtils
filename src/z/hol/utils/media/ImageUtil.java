@@ -38,19 +38,24 @@ public class ImageUtil {
 
 	// 将Drawable转化为Bitmap
 	public static Bitmap drawableToBitmap(Drawable drawable) {
-		if (drawable != null){
-			if (drawable instanceof BitmapDrawable){
-				return ((BitmapDrawable) drawable).getBitmap();
+		try {
+			if (drawable != null){
+				if (drawable instanceof BitmapDrawable){
+					return ((BitmapDrawable) drawable).getBitmap();
+				}
+				int width = drawable.getIntrinsicWidth();
+				int height = drawable.getIntrinsicHeight();
+				Bitmap bitmap = Bitmap.createBitmap(width, height, drawable
+						.getOpacity() != PixelFormat.OPAQUE ? Bitmap.Config.ARGB_8888
+								: Bitmap.Config.RGB_565);
+				Canvas canvas = new Canvas(bitmap);
+				drawable.setBounds(0, 0, width, height);
+				drawable.draw(canvas);
+				return bitmap;
 			}
-			int width = drawable.getIntrinsicWidth();
-			int height = drawable.getIntrinsicHeight();
-			Bitmap bitmap = Bitmap.createBitmap(width, height, drawable
-					.getOpacity() != PixelFormat.OPAQUE ? Bitmap.Config.ARGB_8888
-							: Bitmap.Config.RGB_565);
-			Canvas canvas = new Canvas(bitmap);
-			drawable.setBounds(0, 0, width, height);
-			drawable.draw(canvas);
-			return bitmap;
+		} catch (Exception e) {
+			// This is Auto-generated catch block
+			e.printStackTrace();
 		}
 		return null;
 	}

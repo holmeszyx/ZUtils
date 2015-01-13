@@ -34,6 +34,8 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	public static final int ERROR_CODE_DOWNLOAD_URL_INCORRECT = 10804;
 	/** 下载出错 */
 	public static final int ERROR_CODE_DOWNLOAD_ERROR = 10805;
+	/** 下载未知出错 */
+	public static final int ERROR_CODE_DOWNLOAD_UNKNOWN_ERROR = 10806;
 	/** 获取文件大小的服务状态码基础偏移 */
 	public static final int ERROR_CDOE_BASE_GET_FILE_SIZE_HTTP_OFFSET = 20000;
 	/** 获取文件大小的非服务器状态异常(超时等) */
@@ -46,6 +48,10 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	private boolean mUseTempFile = true;
 	/** 是否自动网络异常重试 */
 	private boolean mAutoTryAgain = true;
+	/** 全局重试次数限制, 防止特殊情况下，无法捕捉到网络异常 */
+	private int mGlobalTryAgainLimit = 20;
+	/** 全局重试次数. 这个不会重置 */
+	private int mGlobalTryTimes = 0;
 	private int mMaxTryAgainTimes = MAX_TRY_AGAIN_TIMES;
 	/** 下载异常后尝试次数(网络异常) */
 	private int mAlreadyTryTimes = 0;
@@ -327,6 +333,9 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			invokeTryAgainError(ERROR_CODE_DOWNLOAD_ERROR);
+		} catch (Exception e){
+			e.printStackTrace();
+			invokeTryAgainError(ERROR_CODE_DOWNLOAD_UNKNOWN_ERROR);
 		}finally{
 			if (in != null){
 				try {
@@ -374,6 +383,7 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 					e.printStackTrace();
 				}
 			}
+			mGlobalTryTimes ++;
 			doDownload();
 		}
 	}
@@ -405,7 +415,8 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 		// 在 invokeTryAgainError 之后， mAlreadyTryTimes 会自增 1
 		// 所以 mAlreadyTryTimes 必大于 0
 		// 但为了防止无限重试，又加上小于最大连续尝试次数
-		return (mAlreadyTryTimes > 0 && mAlreadyTryTimes <= mMaxTryAgainTimes);
+		return (mAlreadyTryTimes > 0 && mAlreadyTryTimes <= mMaxTryAgainTimes)
+					&& (mGlobalTryTimes <= mGlobalTryAgainLimit);
 	}
 	
 	/**
@@ -422,7 +433,8 @@ public class ContinuinglyDownloader implements Runnable, OnRedirectListener{
 	private void invokeTryAgainError(int errorCode){
 		if (mAutoTryAgain){
 			mAlreadyTryTimes ++;
-			if (mAlreadyTryTimes > mMaxTryAgainTimes){
+			if (mAlreadyTryTimes > mMaxTryAgainTimes
+					|| mGlobalTryTimes > mGlobalTryAgainLimit){
 				onDownloadError(errorCode);
 			}
 		}else{
