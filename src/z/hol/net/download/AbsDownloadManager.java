@@ -9,6 +9,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import android.os.Handler;
 import android.os.Message;
@@ -104,6 +107,8 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	private int mMaxRunning = DEFAULT_MAX_RUNNING;
 	private DownloadTaskListener mDownloadTaskListener;
 	private List<DownloadUIHandler> mDownloadUIHandlerList;
+	/** UI回调的锁, 多线程操作问题 */
+	private ReentrantReadWriteLock mUIHandlerLock;
 
 	/**
 	 * 是否记录跳转地址
@@ -117,6 +122,7 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 		mRunningTask = new AtomicInteger(0);
 		mCompletedTask = new AtomicInteger(0);
 		mDownloadUIHandlerList = new LinkedList<DownloadUIHandler>();
+		mUIHandlerLock = new ReentrantReadWriteLock();
 		setDownloadTaskListener(this);
 	}
 	
@@ -125,15 +131,33 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	}
 	
 	public void registUIHandler(DownloadUIHandler uiHandler){
-		mDownloadUIHandlerList.add(uiHandler);
+		WriteLock wl = mUIHandlerLock.writeLock();
+		wl.lock();	
+		try {
+			mDownloadUIHandlerList.add(uiHandler);
+		} finally {
+			wl.unlock();
+		}
 	}
 	
 	public void unregistUIHandler(DownloadUIHandler uiHandler){
-		mDownloadUIHandlerList.remove(uiHandler);
+		WriteLock wl = mUIHandlerLock.writeLock();
+		wl.lock();	
+		try {
+			mDownloadUIHandlerList.remove(uiHandler);
+		} finally {
+			wl.unlock();
+		}
 	}
 	
 	public void clearRegistedUIHandler(){
-		mDownloadUIHandlerList.clear();
+		WriteLock wl = mUIHandlerLock.writeLock();
+		wl.lock();	
+		try {
+			mDownloadUIHandlerList.clear();
+		} finally {
+			wl.unlock();
+		}
 	}
 	
 	/**
@@ -592,10 +616,17 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 	public void onComplete(long id) {
 		// TODO Auto-generated method stub
 		taskCompleted();
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.complete(id);
+		ReadLock rl = mUIHandlerLock.readLock();
+		rl.lock();
+		try {
+			Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList
+					.iterator();
+			while (iter.hasNext()) {
+				DownloadUIHandler uiHandler = iter.next();
+				uiHandler.complete(id);
+			}
+		} finally {
+			rl.unlock();
 		}
 		if (isTaskNeedRedownload(id)){
 			completedTaskRemoved();
@@ -605,21 +636,33 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 
 	@Override
 	public void onStart(long id, long total, long current) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.start(id, total, current);
+		ReadLock rl = mUIHandlerLock.readLock();
+		rl.lock();
+		try {
+			Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList
+					.iterator();
+			while (iter.hasNext()) {
+				DownloadUIHandler uiHandler = iter.next();
+				uiHandler.start(id, total, current);
+			}
+		} finally {
+			rl.unlock();
 		}
 	}
 
 	@Override
 	public void onError(long id, int errorCode) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.error(id, errorCode);
+		ReadLock rl = mUIHandlerLock.readLock();
+		rl.lock();
+		try {
+			Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList
+					.iterator();
+			while (iter.hasNext()) {
+				DownloadUIHandler uiHandler = iter.next();
+				uiHandler.error(id, errorCode);
+			}
+		} finally {
+			rl.unlock();
 		}
 		afterOnPauseUiCallback(id);
 		if (isTaskNeedRedownload(id)){
@@ -629,11 +672,17 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 
 	@Override
 	public void onCancel(long id) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.cancel(id);
+		ReadLock rl = mUIHandlerLock.readLock();
+		rl.lock();
+		try {
+			Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList
+					.iterator();
+			while (iter.hasNext()) {
+				DownloadUIHandler uiHandler = iter.next();
+				uiHandler.cancel(id);
+			}
+		} finally {
+			rl.unlock();
 		}
 		afterOnPauseUiCallback(id);
 		if (isTaskNeedRedownload(id)){
@@ -659,51 +708,81 @@ public abstract class AbsDownloadManager implements DownloadTaskListener{
 
 	@Override
 	public void onProgress(long id, long total, long current) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.progress(id, total, current);
+		ReadLock rl = mUIHandlerLock.readLock();
+		rl.lock();
+		try {
+			Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList
+					.iterator();
+			while (iter.hasNext()) {
+				DownloadUIHandler uiHandler = iter.next();
+				uiHandler.progress(id, total, current);
+			}
+		} finally {
+			rl.unlock();
 		}
 	}
 
 	@Override
 	public void onPrepare(long id) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.prepare(id);
+		ReadLock rl = mUIHandlerLock.readLock();
+		rl.lock();
+		try {
+			Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList
+					.iterator();
+			while (iter.hasNext()) {
+				DownloadUIHandler uiHandler = iter.next();
+				uiHandler.prepare(id);
+			}
+		} finally {
+			rl.unlock();
 		}
 	}
 	
 	@Override
 	public void onAdd(long id) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.taskAdd(id);
+		ReadLock rl = mUIHandlerLock.readLock();
+		rl.lock();
+		try {
+			Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList
+					.iterator();
+			while (iter.hasNext()) {
+				DownloadUIHandler uiHandler = iter.next();
+				uiHandler.taskAdd(id);
+			}
+		} finally {
+			rl.unlock();
 		}
 	}
 
 	@Override
 	public void onWait(long id) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.taskWait(id);
+		ReadLock rl = mUIHandlerLock.readLock();
+		rl.lock();
+		try {
+			Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList
+					.iterator();
+			while (iter.hasNext()) {
+				DownloadUIHandler uiHandler = iter.next();
+				uiHandler.taskWait(id);
+			}
+		} finally {
+			rl.unlock();
 		}
 	}
 	
 	@Override
 	public void onRemove(long id) {
-		// TODO Auto-generated method stub
-		Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList.iterator();
-		while(iter.hasNext()){
-			DownloadUIHandler uiHandler = iter.next();
-			uiHandler.taskRemove(id);
+		ReadLock rl = mUIHandlerLock.readLock();
+		rl.lock();
+		try {
+			Iterator<DownloadUIHandler> iter = mDownloadUIHandlerList
+					.iterator();
+			while (iter.hasNext()) {
+				DownloadUIHandler uiHandler = iter.next();
+				uiHandler.taskRemove(id);
+			}
+		} finally {
+			rl.unlock();
 		}
 	}
 	
