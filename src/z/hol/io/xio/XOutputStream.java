@@ -1,5 +1,6 @@
 package z.hol.io.xio;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -10,8 +11,8 @@ public class XOutputStream extends OutputStream{
 	
 	private OutputStream mOut;
 	
-	public XOutputStream(OutputStream out){
-		mOut = out;
+	public XOutputStream(OutputStream out){	
+		mOut = new BufferedOutputStream(out);
 	}
 	
 	@Override
@@ -28,5 +29,10 @@ public class XOutputStream extends OutputStream{
 		// TODO Auto-generated method stub
 		super.close();
 		mOut.close();
+	}
+	
+	@Override
+	public void flush() throws IOException {
+		mOut.flush();
 	}
 }

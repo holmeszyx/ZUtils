@@ -1,5 +1,6 @@
 package z.hol.io.xio;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -10,7 +11,7 @@ public class XInputStream extends InputStream{
 	private InputStream mIn;
 	
 	public XInputStream(InputStream in){
-		mIn = in;
+		mIn = new BufferedInputStream(in, 8192);
 	}
 	
 
